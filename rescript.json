@@ -22,5 +22,8 @@
   ],
   "jsx": {
     "version": 4
+  },
+  "warnings": {
+    "error": "+8"
   }
 }
