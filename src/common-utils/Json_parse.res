@@ -14,8 +14,8 @@ let pathToStr = path => {
 }
 
 let getDefaultValue = (
-    ~default:option<unit=>'a>, 
     ~defaultVal:option<'a>, 
+    ~default:option<unit=>'a>, 
 ):option<'a> => {
     switch defaultVal {
         | Some(_) => defaultVal
@@ -29,20 +29,30 @@ let getDefaultValue = (
 }
 
 let validate = (
-    value:'a,
+    res:result<'a,string>,
     ~validator:option<'a => result<'a,string>>, 
     ~default:option<unit=>'a>, 
     ~defaultVal:option<'a>, 
 ):result<'a,string> => {
-    switch validator {
-        | None => Ok(value)
-        | Some(validator) => {
-            switch validator(value) {
-                | Ok(value) => Ok(value)
-                | Error(msg) => {
-                    switch getDefaultValue( ~default, ~defaultVal, ) {
-                        | Some(value) => Ok(value)
-                        | None => Error(msg)
+    switch res {
+        | Error(_) => {
+            switch getDefaultValue( ~defaultVal, ~default, ) {
+                | None => res
+                | Some(value) => Ok(value)
+            }
+        }
+        | Ok(value) => {
+            switch validator {
+                | None => res
+                | Some(validator) => {
+                    switch validator(value) {
+                        | Ok(value) => Ok(value)
+                        | Error(msg) => {
+                            switch getDefaultValue( ~defaultVal, ~default, ) {
+                                | Some(value) => Ok(value)
+                                | None => Error(msg)
+                            }
+                        }
                     }
                 }
             }
@@ -62,7 +72,7 @@ let makeMapper = (
     ):result<'a,string> => {
         switch json->decoder {
             | None => Error(typeStr ++ " was expected at " ++ pathToStr(path))
-            | Some(val) => val->validate(~validator, ~defaultVal, ~default)
+            | Some(val) => Ok(val)->validate(~validator, ~defaultVal, ~default)
         }
     }
 }
@@ -86,7 +96,7 @@ let makeMapperOpt = (
                     }
                     | Some(val) => {
                         validate(
-                            Some(val),
+                            Ok(Some(val)),
                             ~validator = validator->Option.map(validator => {
                                 some => {
                                     some->Option.getExn->validator->Result.map(val => Some(val))
@@ -165,6 +175,39 @@ let asStrOpt = makeMapperOpt("A string", JSON.Decode.string)
 let str = makeGetter("A string", asStr)
 let strOpt = makeGetterOpt("A string", asStrOpt)
 
+@new external newArray: int=>array<'a> = "Array"
+
+let asArr = (
+    (path,json):jsonAny, 
+    mapper: jsonAny => result<'a,string>,
+    ~validator:option<array<'a> => result<array<'a>,string>>=?, 
+    ~defaultVal:option<array<'a>>=?, 
+    ~default:option<unit=>array<'a>>=?, 
+):result<array<'a>,string> => {
+    switch json->JSON.Decode.array {
+        | None => Error(`An array was expected at '${pathToStr(path)}'`)
+        | Some(arr) => {
+            arr->Array.reduceWithIndex(
+                Ok(newArray(arr->Array.length)),
+                (res, elem, i) => {
+                    switch res {
+                        | Error(_) => res
+                        | Ok(resArr) => {
+                            switch mapper((list{i->Int.toString, ...path}, arr->Array.getUnsafe(i))) {
+                                | Error(msg) => Error(msg)
+                                | Ok(mappedElem) => {
+                                    resArr[i] = mappedElem
+                                    res
+                                }
+                            }
+                        }
+                    }
+                }
+            )->validate(~validator, ~defaultVal, ~default)
+        }
+    }
+}
+
 let fromJson = (
     json:JSON.t, 
     mapper:jsonAny=>result<'a,string>,
@@ -172,7 +215,7 @@ let fromJson = (
     ~defaultVal:option<'a>=?, 
     ~default:option<unit=>'a>=?, 
 ):result<'a,string> => {
-    (rootPath, json)->mapper->Result.flatMap(validate(_, ~validator, ~defaultVal, ~default))
+    (rootPath, json)->mapper->validate(~validator, ~defaultVal, ~default)
 }
 
 let parseJson = (
@@ -184,6 +227,6 @@ let parseJson = (
 ):result<'a,string> => {
     switch catchExn(() => JSON.parseExn(jsonStr)) {
         | Error({msg}) => Error(msg)
-        | Ok(json) => json->fromJson(mapper, ~validator?, ~defaultVal?, ~default?)
-    }
+        | Ok(json) => (rootPath, json)->mapper
+    }->validate(~validator, ~defaultVal, ~default)
 }

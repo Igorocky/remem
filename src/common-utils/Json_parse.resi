@@ -45,3 +45,11 @@ let strOpt: (
     ~defaultVal: option<string>=?,
     ~default: unit=>option<string>=?,
 ) => result<option<string>, string>
+
+let asArr: (
+    jsonAny, 
+    jsonAny => result<'a,string>,
+    ~validator:array<'a> => result<array<'a>,string>=?, 
+    ~defaultVal:array<'a>=?, 
+    ~default:unit=>array<'a>=?, 
+) => result<array<'a>,string>
