@@ -4,52 +4,52 @@ let parseJson: (
     string, 
     jsonAny => 'a, 
     ~validator: 'a=>result<'a,string>=?, 
-    ~defaultVal: 'a=?,
-    ~default: unit=>'a=?,
+    ~default: 'a=?,
+    ~defaultFn: unit=>'a=?,
 ) => result<'a, string>
 
 let fromJson: (
     JSON.t, 
     jsonAny => 'a,
     ~validator: 'a=>result<'a,string>=?, 
-    ~defaultVal: 'a=?,
-    ~default: unit=>'a=?,
+    ~default: 'a=?,
+    ~defaultFn: unit=>'a=?,
 ) => result<'a, string>
 
 let asStr: (
     jsonAny,
     ~validator: string=>result<string,string>=?, 
-    ~defaultVal: string=?,
-    ~default: unit=>string=?,
+    ~default: string=?,
+    ~defaultFn: unit=>string=?,
 ) => string
 
 let asStrOpt: (
     jsonAny,
     ~validator: string=>result<string,string>=?, 
-    ~defaultVal: option<string>=?,
-    ~default: unit=>option<string>=?,
+    ~default: option<string>=?,
+    ~defaultFn: unit=>option<string>=?,
 ) => option<string>
 
 let str: (
     jsonAny,
     string,
     ~validator: string=>result<string,string>=?, 
-    ~defaultVal: string=?,
-    ~default: unit=>string=?,
+    ~default: string=?,
+    ~defaultFn: unit=>string=?,
 ) => string
 
 let strOpt: (
     jsonAny,
     string,
     ~validator: string=>result<string,string>=?, 
-    ~defaultVal: option<string>=?,
-    ~default: unit=>option<string>=?,
+    ~default: option<string>=?,
+    ~defaultFn: unit=>option<string>=?,
 ) => option<string>
 
 let asArr: (
     jsonAny, 
     jsonAny => 'a,
     ~validator:array<'a> => result<array<'a>,string>=?, 
-    ~defaultVal:array<'a>=?, 
-    ~default:unit=>array<'a>=?, 
+    ~default:array<'a>=?, 
+    ~defaultFn:unit=>array<'a>=?, 
 ) => array<'a>

@@ -59,27 +59,24 @@ describe("Json_parse.parseJson", () => {
             }
         }
     })
-    // it("returns a meaningful message when null is passed", _ => {
-    //     //given
-    //     let jsonStr = `null`
+    it("returns a meaningful message when null is passed", _ => {
+        //given
+        let jsonStr = `null`
 
-    //     //when
-    //     let p = parseJson(
-    //         jsonStr, 
-    //         asObj(_, d => {
-    //             name: d->str("name", ()),
-    //             value: d->str("value", ()),
-    //         }, ()),
-    //         ()
-    //     )
+        //when
+        let p = parseJson( jsonStr, o => 
+            {
+                name: o->str("name"),
+                value: o->str("value"),
+            }
+        )
 
-    //     //then
-    //     switch p {
-    //         | Error(msg) =>
-    //             assertEq("Parse error: an object was expected at '/'.", msg)
-    //         | _ => fail()
-    //     }
-    // })
+        //then
+        switch p {
+            | Error(msg) => assertEq(msg, "An object was expected at '/'.")
+            | _ => fail()
+        }
+    })
     // it("returns an error message when unparsable text is passed", _ => {
     //     //given
     //     let jsonStr = `null-`
