@@ -2,7 +2,7 @@ type jsonAny
 
 let parseJson: (
     string, 
-    jsonAny => result<'a,string>, 
+    jsonAny => 'a, 
     ~validator: 'a=>result<'a,string>=?, 
     ~defaultVal: 'a=?,
     ~default: unit=>'a=?,
@@ -10,7 +10,7 @@ let parseJson: (
 
 let fromJson: (
     JSON.t, 
-    jsonAny => result<'a,string>,
+    jsonAny => 'a,
     ~validator: 'a=>result<'a,string>=?, 
     ~defaultVal: 'a=?,
     ~default: unit=>'a=?,
@@ -21,14 +21,14 @@ let asStr: (
     ~validator: string=>result<string,string>=?, 
     ~defaultVal: string=?,
     ~default: unit=>string=?,
-) => result<string, string>
+) => string
 
 let asStrOpt: (
     jsonAny,
     ~validator: string=>result<string,string>=?, 
     ~defaultVal: option<string>=?,
     ~default: unit=>option<string>=?,
-) => result<option<string>, string>
+) => option<string>
 
 let str: (
     jsonAny,
@@ -36,7 +36,7 @@ let str: (
     ~validator: string=>result<string,string>=?, 
     ~defaultVal: string=?,
     ~default: unit=>string=?,
-) => result<string, string>
+) => string
 
 let strOpt: (
     jsonAny,
@@ -44,12 +44,12 @@ let strOpt: (
     ~validator: string=>result<string,string>=?, 
     ~defaultVal: option<string>=?,
     ~default: unit=>option<string>=?,
-) => result<option<string>, string>
+) => option<string>
 
 let asArr: (
     jsonAny, 
-    jsonAny => result<'a,string>,
+    jsonAny => 'a,
     ~validator:array<'a> => result<array<'a>,string>=?, 
     ~defaultVal:array<'a>=?, 
     ~default:unit=>array<'a>=?, 
-) => result<array<'a>,string>
+) => array<'a>
