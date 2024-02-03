@@ -154,20 +154,22 @@ describe("Json_parse.parseJson", () => {
 //     })
 // })
 
-// describe("Expln_utils_json.asStrOpt", _ => {
-//     it("should return None when null is passed", _ => {
-//         //given
-//         let jsonStr = `{"arr":["A",null,"B"]}`
+describe("strOpt", _ => {
+    it("should return None when null is passed", _ => {
+        //given
+        let jsonStr = `{"arr":["A",null,"B"]}`
 
-//         //when
-//         let p = parseJson(jsonStr, asObj(_, d => {
-//             "arr": d->arr("arr", asStrOpt(_, ()), ()),
-//         }, ()), ())->Belt_Result.getExn
+        //when
+        let p = parseJson(jsonStr, o => 
+            {
+                "arr": o->arr("arr", toStrOpt(_)),
+            }
+        )->Result.getExn
 
-//         //then
-//         assertEq(p, {"arr":[Some("A"),None,Some("B")]})
-//     })
-// })
+        //then
+        assertEq(p, {"arr":[Some("A"),None,Some("B")]})
+    })
+})
 
 // describe("Expln_utils_json.asStr", _ => {
 //     it("should return an error when null is passed", _ => {

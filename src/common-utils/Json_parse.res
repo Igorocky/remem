@@ -168,12 +168,12 @@ let makeGetterOpt = (
     }
 }
 
-let asStr = makeMapper("A string", JSON.Decode.string)
-let asStrOpt = makeMapperOpt("A string", JSON.Decode.string)
-let str = makeGetter("A string", asStr)
-let strOpt = makeGetterOpt("A string", asStrOpt)
+let toStr = makeMapper("A string", JSON.Decode.string)
+let toStrOpt = makeMapperOpt("A string", JSON.Decode.string)
+let str = makeGetter("A string", toStr)
+let strOpt = makeGetterOpt("A string", toStrOpt)
 
-let asArr = (
+let toArr = (
     (path,json):jsonAny,
     mapper: jsonAny => 'a,
     ~validator:option<array<'a> => result<array<'a>,string>>=?, 
@@ -184,7 +184,74 @@ let asArr = (
         | None => Js.Exn.raiseError(`An array was expected at '${pathToStr(path)}'.`)
         | Some(arr) => {
             Ok(arr->Array.mapWithIndex((elem, i) => (list{i->Int.toString, ...path}, elem)->mapper))
-                ->validate(~validator, ~default, ~defaultFn)
+                ->validate( ~validator, ~default, ~defaultFn )
+        }
+    }
+}
+
+let toArrOpt = (
+    (path,json):jsonAny,
+    mapper: jsonAny => 'a,
+    ~validator:option<array<'a> => result<array<'a>,string>>=?, 
+    ~default:option<option<array<'a>>>=?, 
+    ~defaultFn:option<unit=>option<array<'a>>>=?, 
+):option<array<'a>> => {
+    switch json->JSON.Decode.null {
+        | Some(_) => None
+        | None => {
+            switch json->JSON.Decode.array {
+                | None => Js.Exn.raiseError(`An array was expected at '${pathToStr(path)}'.`)
+                | Some(arr) => {
+                    Ok(arr->Array.mapWithIndex((elem, i) => (list{i->Int.toString, ...path}, elem)->mapper)->Some)
+                        ->validate(
+                            ~validator = validator->Option.map(validator => {
+                                some => {
+                                    some->Option.getExn->validator->Result.map(val => Some(val))
+                                }
+                            }),
+                            ~default, 
+                            ~defaultFn
+                        )
+                }
+            }
+        }
+    }
+}
+
+let arr = (
+    (path,json):jsonAny,
+    attrName:string,
+    mapper: jsonAny => 'a,
+    ~validator:option<array<'a> => result<array<'a>,string>>=?, 
+    ~default:option<array<'a>>=?, 
+    ~defaultFn:option<unit=>array<'a>>=?, 
+):array<'a> => {
+    switch json->JSON.Decode.object {
+        | None => Js.Exn.raiseError(`An object was expected at '${pathToStr(path)}'.`)
+        | Some(dict) => {
+            switch dict->Dict.get(attrName) {
+                | None => Js.Exn.raiseError(`An array was expected at '${pathToStr(list{attrName, ...path})}'`)
+                | Some(json) => (list{attrName, ...path}, json)->toArr(mapper, ~validator?, ~default?, ~defaultFn?)
+            }
+        }
+    }
+}
+
+let arrOpt = (
+    (path,json):jsonAny,
+    attrName:string,
+    mapper: jsonAny => 'a,
+    ~validator:option<array<'a> => result<array<'a>,string>>=?, 
+    ~default:option<option<array<'a>>>=?, 
+    ~defaultFn:option<unit=>option<array<'a>>>=?, 
+):option<array<'a>> => {
+    switch json->JSON.Decode.object {
+        | None => Js.Exn.raiseError(`An object was expected at '${pathToStr(path)}'.`)
+        | Some(dict) => {
+            switch dict->Dict.get(attrName) {
+                | None => None
+                | Some(json) => (list{attrName, ...path}, json)->toArrOpt(mapper, ~validator?, ~default?, ~defaultFn?)
+            }
         }
     }
 }

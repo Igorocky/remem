@@ -16,14 +16,14 @@ let fromJson: (
     ~defaultFn: unit=>'a=?,
 ) => result<'a, string>
 
-let asStr: (
+let toStr: (
     jsonAny,
     ~validator: string=>result<string,string>=?, 
     ~default: string=?,
     ~defaultFn: unit=>string=?,
 ) => string
 
-let asStrOpt: (
+let toStrOpt: (
     jsonAny,
     ~validator: string=>result<string,string>=?, 
     ~default: option<string>=?,
@@ -46,10 +46,36 @@ let strOpt: (
     ~defaultFn: unit=>option<string>=?,
 ) => option<string>
 
-let asArr: (
+let toArr: (
     jsonAny, 
     jsonAny => 'a,
     ~validator:array<'a> => result<array<'a>,string>=?, 
     ~default:array<'a>=?, 
     ~defaultFn:unit=>array<'a>=?, 
 ) => array<'a>
+
+let toArrOpt: (
+    jsonAny, 
+    jsonAny => 'a,
+    ~validator:array<'a> => result<array<'a>,string>=?, 
+    ~default:option<array<'a>>=?, 
+    ~defaultFn:unit=>option<array<'a>>=?, 
+) => option<array<'a>>
+
+let arr: (
+    jsonAny, 
+    string,
+    jsonAny => 'a,
+    ~validator:array<'a> => result<array<'a>,string>=?, 
+    ~default:array<'a>=?, 
+    ~defaultFn:unit=>array<'a>=?, 
+) => array<'a>
+
+let arrOpt: (
+    jsonAny, 
+    string,
+    jsonAny => 'a,
+    ~validator:array<'a> => result<array<'a>,string>=?, 
+    ~default:option<array<'a>>=?, 
+    ~defaultFn:unit=>option<array<'a>>=?, 
+) => option<array<'a>>
