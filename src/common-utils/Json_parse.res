@@ -3,6 +3,7 @@ open Common_utils
 type path = list<string>
 
 type jsonAny = (path, JSON.t)
+type jsonObj = (path, Dict.t<JSON.t>)
 
 let rootPath = list{}
 
@@ -121,26 +122,20 @@ let makeGetter = (
         ) => 'a
 ) => {
     (
-        (path,json):jsonAny, 
+        (path,dict):jsonObj, 
         attrName:string,
         ~validator:option<'a => result<'a,string>>=?, 
         ~default:option<'a>=?, 
         ~defaultFn:option<unit=>'a>=?, 
     ):'a => {
-        switch json->JSON.Decode.object {
-            | None => Js.Exn.raiseError(`An object was expected at '${pathToStr(path)}'.`)
-            | Some(dict) => {
-                switch dict->Dict.get(attrName) {
-                    | None => Js.Exn.raiseError(`${typeStr} was expected at '${pathToStr(list{attrName, ...path})}'.`)
-                    | Some(json) => (list{attrName, ...path}, json)->mapper(~validator?, ~default?, ~defaultFn?)
-                }
-            }
+        switch dict->Dict.get(attrName) {
+            | None => Js.Exn.raiseError(`${typeStr} was expected at '${pathToStr(list{attrName, ...path})}'.`)
+            | Some(json) => (list{attrName, ...path}, json)->mapper(~validator?, ~default?, ~defaultFn?)
         }
     }
 }
 
 let makeGetterOpt = (
-    typeStr:string,
     mapper:
         (
             jsonAny, 
@@ -150,20 +145,15 @@ let makeGetterOpt = (
         ) => option<'a>
 ) => {
     (
-        (path,json):jsonAny, 
+        (path,dict):jsonObj, 
         attrName:string,
         ~validator:option<'a => result<'a,string>>=?, 
         ~default:option<option<'a>>=?, 
         ~defaultFn:option<unit=>option<'a>>=?, 
     ):option<'a> => {
-        switch json->JSON.Decode.object {
-            | None => Js.Exn.raiseError(`An object was expected at '${pathToStr(path)}'.`)
-            | Some(dict) => {
-                switch dict->Dict.get(attrName) {
-                    | None => None
-                    | Some(json) => (list{attrName, ...path}, json)->mapper(~validator?, ~default?, ~defaultFn?)
-                }
-            }
+        switch dict->Dict.get(attrName) {
+            | None => None
+            | Some(json) => (list{attrName, ...path}, json)->mapper(~validator?, ~default?, ~defaultFn?)
         }
     }
 }
@@ -171,22 +161,22 @@ let makeGetterOpt = (
 let toStr = makeMapper("A string", JSON.Decode.string)
 let toStrOpt = makeMapperOpt("A string", JSON.Decode.string)
 let str = makeGetter("A string", toStr)
-let strOpt = makeGetterOpt("A string", toStrOpt)
+let strOpt = makeGetterOpt(toStrOpt)
 
 let toFloat = makeMapper("A number", JSON.Decode.float)
 let toFloatOpt = makeMapperOpt("A number", JSON.Decode.float)
 let float = makeGetter("A number", toFloat)
-let floatOpt = makeGetterOpt("A number", toFloatOpt)
+let floatOpt = makeGetterOpt(toFloatOpt)
 
 let toInt = makeMapper("An integer", json => json->JSON.Decode.float->Option.map(Float.toInt))
 let toIntOpt = makeMapperOpt("An integer", json => json->JSON.Decode.float->Option.map(Float.toInt))
 let int = makeGetter("An integer", toInt)
-let intOpt = makeGetterOpt("An integer", toIntOpt)
+let intOpt = makeGetterOpt(toIntOpt)
 
 let toBool = makeMapper("A boolean", JSON.Decode.bool)
 let toBoolOpt = makeMapperOpt("A boolean", JSON.Decode.bool)
 let bool = makeGetter("A boolean", toBool)
-let boolOpt = makeGetterOpt("A boolean", toBoolOpt)
+let boolOpt = makeGetterOpt(toBoolOpt)
 
 let toArr = (
     (path,json):jsonAny,
@@ -234,38 +224,70 @@ let toArrOpt = (
 }
 
 let arr = (
-    (path,json):jsonAny,
+    (path,dict):jsonObj,
     attrName:string,
     mapper: jsonAny => 'a,
     ~validator:option<array<'a> => result<array<'a>,string>>=?, 
     ~default:option<array<'a>>=?, 
     ~defaultFn:option<unit=>array<'a>>=?, 
 ):array<'a> => {
-    switch json->JSON.Decode.object {
-        | None => Js.Exn.raiseError(`An object was expected at '${pathToStr(path)}'.`)
-        | Some(dict) => {
-            switch dict->Dict.get(attrName) {
-                | None => Js.Exn.raiseError(`An array was expected at '${pathToStr(list{attrName, ...path})}'`)
-                | Some(json) => (list{attrName, ...path}, json)->toArr(mapper, ~validator?, ~default?, ~defaultFn?)
-            }
-        }
+    switch dict->Dict.get(attrName) {
+        | None => Js.Exn.raiseError(`An array was expected at '${pathToStr(list{attrName, ...path})}'`)
+        | Some(json) => (list{attrName, ...path}, json)->toArr(mapper, ~validator?, ~default?, ~defaultFn?)
     }
 }
 
 let arrOpt = (
-    (path,json):jsonAny,
+    (path,dict):jsonObj,
     attrName:string,
     mapper: jsonAny => 'a,
     ~validator:option<array<'a> => result<array<'a>,string>>=?, 
     ~default:option<option<array<'a>>>=?, 
     ~defaultFn:option<unit=>option<array<'a>>>=?, 
 ):option<array<'a>> => {
+    switch dict->Dict.get(attrName) {
+        | None => None
+        | Some(json) => (list{attrName, ...path}, json)->toArrOpt(mapper, ~validator?, ~default?, ~defaultFn?)
+    }
+}
+
+let toObj = (
+    (path,json):jsonAny,
+    mapper: jsonObj => 'a,
+    ~validator:option<'a => result<'a,string>>=?, 
+    ~default:option<'a>=?, 
+    ~defaultFn:option<unit=>'a>=?, 
+):'a => {
     switch json->JSON.Decode.object {
         | None => Js.Exn.raiseError(`An object was expected at '${pathToStr(path)}'.`)
-        | Some(dict) => {
-            switch dict->Dict.get(attrName) {
-                | None => None
-                | Some(json) => (list{attrName, ...path}, json)->toArrOpt(mapper, ~validator?, ~default?, ~defaultFn?)
+        | Some(dict) => Ok((path, dict)->mapper)->validate( ~validator, ~default, ~defaultFn )
+    }
+}
+
+let toObjOpt = (
+    (path,json):jsonAny,
+    mapper: jsonObj => 'a,
+    ~validator:option<'a => result<'a,string>>=?, 
+    ~default:option<option<'a>>=?, 
+    ~defaultFn:option<unit=>option<'a>>=?, 
+):option<'a> => {
+    switch json->JSON.Decode.null {
+        | Some(_) => None
+        | None => {
+            switch json->JSON.Decode.object {
+                | None => Js.Exn.raiseError(`An object was expected at '${pathToStr(path)}'.`)
+                | Some(dict) => {
+                    Ok(Some((path, dict)->mapper))
+                        ->validate(
+                            ~validator = validator->Option.map(validator => {
+                                some => {
+                                    some->Option.getExn->validator->Result.map(val => Some(val))
+                                }
+                            }),
+                            ~default, 
+                            ~defaultFn
+                        )
+                }
             }
         }
     }

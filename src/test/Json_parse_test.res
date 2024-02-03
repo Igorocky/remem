@@ -23,7 +23,7 @@ describe("parseJson", () => {
         }`
 
         //when
-        let p = parseJson( jsonStr, o => 
+        let p = parseJson( jsonStr, toObj(_, o => 
             {
                 "name": o->str("name"),
                 "value": o->str("value"),
@@ -35,7 +35,7 @@ describe("parseJson", () => {
                 "boolTrue": o->bool("boolTrue"),
                 "boolOpt": o->boolOpt("boolOpt"),
             }
-        )
+        ))
 
         //then
         switch p {
@@ -60,12 +60,12 @@ describe("parseJson", () => {
         let jsonStr = `null`
 
         //when
-        let p = parseJson( jsonStr, o => 
+        let p = parseJson( jsonStr, toObj(_, o => 
             {
                 name: o->str("name"),
                 value: o->str("value"),
             }
-        )
+        ))
 
         //then
         switch p {
@@ -78,12 +78,12 @@ describe("parseJson", () => {
         let jsonStr = `null-`
 
         //when
-        let p = parseJson( jsonStr, o => 
+        let p = parseJson( jsonStr, toObj(_, o => 
             {
                 name: o->str("name"),
                 value: o->str("value"),
             }
-        )
+        ))
 
         //then
         switch p {
@@ -99,12 +99,12 @@ describe("parseJson", () => {
         }`
 
         //when
-        let p = parseJson( jsonStr, o => 
+        let p = parseJson( jsonStr, toObj(_, o => 
             {
                 name: o->str("name"),
                 value: o->str("value"),
             }
-        )
+        ))
 
         //then
         switch p {
@@ -119,12 +119,12 @@ describe("parseJson", () => {
         }`
 
         //when
-        let p = parseJson( jsonStr, o => 
+        let p = parseJson( jsonStr, toObj(_, o => 
             {
                 name: o->str("name"),
                 value: o->str("value"),
             }
-        )
+        ))
 
         //then
         switch p {
@@ -159,11 +159,11 @@ describe("strOpt", _ => {
         let jsonStr = `{"arr":["A",null,"B"]}`
 
         //when
-        let p = parseJson(jsonStr, o => 
+        let p = parseJson(jsonStr, toObj(_, o => 
             {
                 "arr": o->arr("arr", toStrOpt(_)),
             }
-        )->Result.getExn
+        ))->Result.getExn
 
         //then
         assertEq(p, {"arr":[Some("A"),None,Some("B")]})
