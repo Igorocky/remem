@@ -293,6 +293,34 @@ let toObjOpt = (
     }
 }
 
+let obj = (
+    (path,dict):jsonObj,
+    attrName:string,
+    mapper: jsonObj => 'a,
+    ~validator:option<'a => result<'a,string>>=?, 
+    ~default:option<'a>=?, 
+    ~defaultFn:option<unit=>'a>=?, 
+):'a => {
+    switch dict->Dict.get(attrName) {
+        | None => Js.Exn.raiseError(`An object was expected at '${pathToStr(list{attrName, ...path})}'`)
+        | Some(json) => (list{attrName, ...path}, json)->toObj(mapper, ~validator?, ~default?, ~defaultFn?)
+    }
+}
+
+let objOpt = (
+    (path,dict):jsonObj,
+    attrName:string,
+    mapper: jsonObj => 'a,
+    ~validator:option<'a => result<'a,string>>=?, 
+    ~default:option<option<'a>>=?, 
+    ~defaultFn:option<unit=>option<'a>>=?, 
+):option<'a> => {
+    switch dict->Dict.get(attrName) {
+        | None => None
+        | Some(json) => (list{attrName, ...path}, json)->toObjOpt(mapper, ~validator?, ~default?, ~defaultFn?)
+    }
+}
+
 let catchExn = (action:unit=>'a):result<'a,string> => {
     switch catchExn(action) {
         | Error({msg}) => Error(msg)

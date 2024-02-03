@@ -77,9 +77,9 @@ let toObj: (jsonAny, jsonObj => 'a,
 let toObjOpt: (jsonAny, jsonObj => 'a, 
     ~validator:'a => result<'a,string>=?, ~default:option<'a>=?, ~defaultFn:unit=>option<'a>=?) 
     => option<'a>
-// let arr: (jsonObj, string, jsonAny => 'a, 
-//     ~validator:array<'a> => result<array<'a>,string>=?, ~default:array<'a>=?, ~defaultFn:unit=>array<'a>=?) 
-//     => array<'a>
-// let arrOpt: (jsonObj, string, jsonAny => 'a, 
-//     ~validator:array<'a> => result<array<'a>,string>=?, ~default:option<array<'a>>=?, ~defaultFn:unit=>option<array<'a>>=?) 
-//     => option<array<'a>>
+let obj: (jsonObj, string, jsonObj => 'a, 
+    ~validator:'a => result<'a,string>=?, ~default:'a=?, ~defaultFn:unit=>'a=?) 
+    => 'a
+let objOpt: (jsonObj, string, jsonObj => 'a, 
+    ~validator:'a => result<'a,string>=?, ~default:option<'a>=?, ~defaultFn:unit=>option<'a>=?) 
+    => option<'a>
