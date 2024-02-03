@@ -8,8 +8,8 @@ type param = {
     value: string,
 }
 
-describe("Json_parse.parseJson", () => {
-    it("should parse a simple object", () => {
+describe("parseJson", () => {
+    it("parses a simple object", () => {
         //given
         let jsonStr = `{
             "name": "AAA",
@@ -27,18 +27,14 @@ describe("Json_parse.parseJson", () => {
             {
                 "name": o->str("name"),
                 "value": o->str("value"),
+                "num": o->float("num"),
+                "numOpt": o->floatOpt("numOpt"),
+                "int": o->int("int"),
+                "intOpt": o->intOpt("intOpt"),
+                "boolFalse": o->bool("boolFalse"),
+                "boolTrue": o->bool("boolTrue"),
+                "boolOpt": o->boolOpt("boolOpt"),
             }
-            // asObj(_, d => {
-            //     "name": d->str("name", ()),
-            //     "value": d->str("value", ()),
-            //     "num": d->num("num", ()),
-            //     "numOpt": d->numOpt("numOpt", ()),
-            //     "int": d->int("int", ()),
-            //     "intOpt": d->intOpt("intOpt", ()),
-            //     "boolFalse": d->bool("boolFalse", ()),
-            //     "boolTrue": d->bool("boolTrue", ()),
-            //     "boolOpt": d->boolOpt("boolOpt", ()),
-            // }, ()), 
         )
 
         //then
@@ -46,13 +42,13 @@ describe("Json_parse.parseJson", () => {
             | Ok(param) =>
                 assertEq("AAA", param["name"])
                 assertEq("BBB", param["value"])
-                // assertEq(123.4, param["num"])
-                // assertEq(None, param["numOpt"])
-                // assertEq(78, param["int"])
-                // assertEq(None, param["intOpt"])
-                // assertEq(false, param["boolFalse"])
-                // assertEq(true, param["boolTrue"])
-                // assertEq(None, param["boolOpt"])
+                assertEq(123.4, param["num"])
+                assertEq(None, param["numOpt"])
+                assertEq(78, param["int"])
+                assertEq(None, param["intOpt"])
+                assertEq(false, param["boolFalse"])
+                assertEq(true, param["boolTrue"])
+                assertEq(None, param["boolOpt"])
             | Error(msg) => {
                 log2("Error: ", msg)
                 fail()
@@ -77,62 +73,65 @@ describe("Json_parse.parseJson", () => {
             | _ => fail()
         }
     })
-    // it("returns an error message when unparsable text is passed", _ => {
-    //     //given
-    //     let jsonStr = `null-`
+    it("returns an error message when unparsable text is passed", _ => {
+        //given
+        let jsonStr = `null-`
 
-    //     //when
-    //     let p = parseJson(jsonStr, asObj(_, d => {
-    //         name: d->str("name", ()),
-    //         value: d->str("value", ()),
-    //     }, ()), ())
+        //when
+        let p = parseJson( jsonStr, o => 
+            {
+                name: o->str("name"),
+                value: o->str("value"),
+            }
+        )
 
-    //     //then
-    //     switch p {
-    //         | Error(msg) =>
-    //             assertEq("Parse error: Unexpected number in JSON at position 4", msg)
-    //         | _ => fail()
-    //     }
-    // })
-    // it("returns a meaningful message when null is passed for a non-null attribute", _ => {
-    //     //given
-    //     let jsonStr = `{
-    //         "name": null,
-    //         "value": "BBB"
-    //     }`
+        //then
+        switch p {
+            | Error(msg) => assertEq(msg, "Unexpected non-whitespace character after JSON at position 4")
+            | _ => fail()
+        }
+    })
+    it("returns a meaningful message when null is passed for a non-null attribute", _ => {
+        //given
+        let jsonStr = `{
+            "name": null,
+            "value": "BBB"
+        }`
 
-    //     //when
-    //     let p = parseJson(jsonStr, asObj(_, d => {
-    //         name: d->str("name", ()),
-    //         value: d->str("value", ()),
-    //     }, ()), ())
+        //when
+        let p = parseJson( jsonStr, o => 
+            {
+                name: o->str("name"),
+                value: o->str("value"),
+            }
+        )
 
-    //     //then
-    //     switch p {
-    //         | Error(msg) =>
-    //             assertEq("Parse error: a string was expected at '/name'.", msg)
-    //         | _ => fail()
-    //     }
-    // })
-    // it("returns a meaningful message when a non-null attribute is absent", _ => {
-    //     //given
-    //     let jsonStr = `{
-    //         "name": "vvv"
-    //     }`
+        //then
+        switch p {
+            | Error(msg) => assertEq(msg, "A string was expected at '/name'.")
+            | _ => fail()
+        }
+    })
+    it("returns a meaningful message when a non-null attribute is absent", _ => {
+        //given
+        let jsonStr = `{
+            "name": "vvv"
+        }`
 
-    //     //when
-    //     let p = parseJson(jsonStr, asObj(_, d => {
-    //         name: d->str("name", ()),
-    //         value: d->str("value", ()),
-    //     }, ()), ())
+        //when
+        let p = parseJson( jsonStr, o => 
+            {
+                name: o->str("name"),
+                value: o->str("value"),
+            }
+        )
 
-    //     //then
-    //     switch p {
-    //         | Error(msg) =>
-    //             assertEq("Parse error: a string was expected at '/value'.", msg)
-    //         | _ => fail()
-    //     }
-    // })
+        //then
+        switch p {
+            | Error(msg) => assertEq(msg, "A string was expected at '/value'.")
+            | _ => fail()
+        }
+    })
 })
 
 // describe("Expln_utils_json.parseObjOpt", _ => {

@@ -71,7 +71,7 @@ let makeMapper = (
         ~defaultFn:option<unit=>'a>=?, 
     ):'a => {
         switch json->decoder {
-            | None => Js.Exn.raiseError(`${typeStr} was expected at '${pathToStr(path)}.'`)
+            | None => Js.Exn.raiseError(`${typeStr} was expected at '${pathToStr(path)}'.`)
             | Some(val) => Ok(val)->validate(~validator, ~default, ~defaultFn)
         }
     }
@@ -91,7 +91,7 @@ let makeMapperOpt = (
             | Some(_) => None
             | None => {
                 switch json->decoder {
-                    | None => Js.Exn.raiseError(`${typeStr} was expected at '${pathToStr(path)}.'`)
+                    | None => Js.Exn.raiseError(`${typeStr} was expected at '${pathToStr(path)}'.`)
                     | Some(val) => {
                         validate(
                             Ok(Some(val)),
@@ -131,7 +131,7 @@ let makeGetter = (
             | None => Js.Exn.raiseError(`An object was expected at '${pathToStr(path)}'.`)
             | Some(dict) => {
                 switch dict->Dict.get(attrName) {
-                    | None => Js.Exn.raiseError(`${typeStr} was expected at '${pathToStr(list{attrName, ...path})}'`)
+                    | None => Js.Exn.raiseError(`${typeStr} was expected at '${pathToStr(list{attrName, ...path})}'.`)
                     | Some(json) => (list{attrName, ...path}, json)->mapper(~validator?, ~default?, ~defaultFn?)
                 }
             }
@@ -172,6 +172,21 @@ let toStr = makeMapper("A string", JSON.Decode.string)
 let toStrOpt = makeMapperOpt("A string", JSON.Decode.string)
 let str = makeGetter("A string", toStr)
 let strOpt = makeGetterOpt("A string", toStrOpt)
+
+let toFloat = makeMapper("A number", JSON.Decode.float)
+let toFloatOpt = makeMapperOpt("A number", JSON.Decode.float)
+let float = makeGetter("A number", toFloat)
+let floatOpt = makeGetterOpt("A number", toFloatOpt)
+
+let toInt = makeMapper("An integer", json => json->JSON.Decode.float->Option.map(Float.toInt))
+let toIntOpt = makeMapperOpt("An integer", json => json->JSON.Decode.float->Option.map(Float.toInt))
+let int = makeGetter("An integer", toInt)
+let intOpt = makeGetterOpt("An integer", toIntOpt)
+
+let toBool = makeMapper("A boolean", JSON.Decode.bool)
+let toBoolOpt = makeMapperOpt("A boolean", JSON.Decode.bool)
+let bool = makeGetter("A boolean", toBool)
+let boolOpt = makeGetterOpt("A boolean", toBoolOpt)
 
 let toArr = (
     (path,json):jsonAny,
