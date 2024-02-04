@@ -1,18 +1,20 @@
 open Sqlite
-
-let tags = "TAGS"
-let tagsId = "ID"
-let tagsName = "NAME"
-let tagsCrtTime = "CRT_TIME"
+open DB_schema
 
 let db = ref(makeDatabase("./remem.sqlite"))
 
 let initDatabase = () => {
-    db.contents->dbPrepare(`
-        create table if not exists ${tags} (
-            ${tagsId} integer primary key,
-            ${tagsName} text not null,
-            ${tagsCrtTime} real not null default ( unixepoch() * 1000 )
-        ) strict;
-    `)->stmtRun->ignore
+    let db = db.contents
+    let latestSchemaVersionStr = "1"
+    switch db->dbPragma("user_version") {
+        | 0 => {
+            db->dbPrepare(dbSchemaV1)->stmtRun->ignore
+            db->dbPragma(`user_version = ${latestSchemaVersionStr}`)
+        }
+        | schemaVersion => {
+            if (schemaVersion->Int.toString != latestSchemaVersionStr) {
+                Js.Exn.raiseError(`schemaVersion != ${latestSchemaVersionStr}`)
+            }
+        }
+    }
 }
