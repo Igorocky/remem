@@ -24,6 +24,7 @@
     "version": 4
   },
   "warnings": {
+    "number": "-44-45",
     "error": "+8"
   }
 }
