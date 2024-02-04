@@ -1,5 +1,5 @@
 open Json_parse
-open Dtos
+open Common_utils
 
 let beEndpoints:Belt.HashMap.String.t<JSON.t=>promise<string>> = Belt.HashMap.String.make(~hintSize=100)
 
@@ -14,21 +14,35 @@ let registerBeMethod = (name:string, inpParser:jsonAny=>'a, method:'a => promise
     beEndpoints->Belt.HashMap.String.set(name, json => {
         switch fromJson(json, inpParser) {
             | Error(msg) => {
-                Js.Exn.raiseError(`Error parsing input request for the BE method '${name}': ${msg}`)
+                let errMsg = `Internal error: cannot parse input request for the BE method '${name}': ${msg}`
+                Console.error(errMsg)
+                { "err": errMsg }->Common_utils.stringify->Promise.resolve
             }
-            | Ok(req) => req->method->Promise.thenResolve(Common_utils.stringify)
+            | Ok(req) => {
+                switch catchExn(() => req->method) {
+                    | Error({exn,msg}) => {
+                        let errMsg = `Internal error: ${msg}`
+                        Console.error(errMsg)
+                        Console.error(exn)
+                        { "err": errMsg }->Common_utils.stringify->Promise.resolve
+                    }
+                    | Ok(res) => res->Promise.thenResolve(res => {"data":res}->Common_utils.stringify)
+                }
+            }
         }
     })
 }
 
 registerBeMethod(
-    method1,
-    method1ReqParser,
-    (req:method1Req) => {
+    Dtos.method1,
+    Dtos.method1ReqParser,
+    (req:Dtos.method1Req) => {
         Promise.resolve(
             {
-                len: req.text->String.length
+                Dtos.len: req.text->String.length
             }
         )
     }
 )
+
+registerBeMethod( Dtos.getAllTags, Dtos.getAllTagsReqParser, Dao.getAllTags )

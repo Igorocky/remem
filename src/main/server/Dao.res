@@ -5,16 +5,29 @@ let db = ref(makeDatabase("./remem.sqlite"))
 
 let initDatabase = () => {
     let db = db.contents
-    let latestSchemaVersionStr = "1"
+    let latestSchemaVersion = 1
     switch db->dbPragma("user_version") {
         | 0 => {
             db->dbPrepare(dbSchemaV1)->stmtRun->ignore
-            db->dbPragma(`user_version = ${latestSchemaVersionStr}`)
+            db->dbPragma(`user_version = ${latestSchemaVersion->Int.toString}`)
         }
         | schemaVersion => {
-            if (schemaVersion->Int.toString != latestSchemaVersionStr) {
-                Js.Exn.raiseError(`schemaVersion != ${latestSchemaVersionStr}`)
+            if (schemaVersion != latestSchemaVersion) {
+                Js.Exn.raiseError(
+                    `schemaVersion ${schemaVersion->Int.toString} != ${latestSchemaVersion->Int.toString}`
+                )
             }
         }
     }
+}
+
+let getAllTags = ():promise<Dtos.getAllTagsRes> => {
+    Promise.resolve(
+        {
+            Dtos.tags: [
+                {id:1.0, name:"T1"},
+                {id:2.0, name:"T2"},
+            ]
+        }
+    )
 }
