@@ -1,4 +1,4 @@
-open React_utils
+open React_common_components
 
 type modalId = string
 

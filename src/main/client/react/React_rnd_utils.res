@@ -1,5 +1,6 @@
 open React_utils
-open Expln_React_Modal
+open React_common_components
+open Modal
 
 let rndHiddenTextField = (~key:option<string>=?, ~onKeyDown:ReactEvent.Keyboard.t=>unit):React.element => {
     <TextField 

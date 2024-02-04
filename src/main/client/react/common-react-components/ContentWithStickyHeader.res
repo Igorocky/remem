@@ -1,4 +1,4 @@
-open Expln_React_UseResizeObserver
+open UseResizeObserver
 
 @react.component
 let make = (~top:int=0, ~header:React.element, ~content:int=>React.element) => {

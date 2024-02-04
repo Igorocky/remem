@@ -1,16 +1,16 @@
-open React_common
+open React_utils
 
 @react.component
 let make = (
     ~gridRef:option<ReactDOM.domRef>=?,
-    ~justifyContent:option<Expln_React_Grid.justifyContent>=?,
-    ~alignItems:option<Expln_React_Grid.alignItems>=?,
+    ~justifyContent:option<Mui_Grid.justifyContent>=?,
+    ~alignItems:option<Mui_Grid.alignItems>=?,
     ~spacing:float=1.,
     ~style:option<ReactDOMStyle.t>=?, 
     ~childXsOffset:option<int=>option<Js.Json.t>>=?,
     ~children:option<React.element>=?
 ) => {
-    <Expln_React_Grid ref=?gridRef container=true direction=#row ?justifyContent ?alignItems spacing ?style >
+    <Mui_Grid ref=?gridRef container=true direction=#row ?justifyContent ?alignItems spacing ?style >
         {switch children {
             | Some(children) => 
                 children->React.Children.mapWithIndex((child,i) => {
@@ -39,14 +39,14 @@ let make = (
                             }
                         }
                     }
-                    <Expln_React_Grid 
+                    <Mui_Grid 
                         ?style
                         xsOffset=?{ childXsOffset->Belt_Option.flatMap(childXsOffset => childXsOffset(i)) } 
                     >
                         child
-                    </Expln_React_Grid>
+                    </Mui_Grid>
                 } )
             | None => React.null
         }}
-    </Expln_React_Grid>
+    </Mui_Grid>
 }
