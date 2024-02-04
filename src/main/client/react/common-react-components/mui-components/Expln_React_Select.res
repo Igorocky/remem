@@ -6,7 +6,7 @@ external make: (
     ~labelId:string=?,
     ~label:string=?,
     ~value:string,
-    ~onChange:ReactEvent.Form.t=?,
+    ~onChange:ReactEvent.Form.t=>unit=?,
     ~onClose:unit=>unit=?,
     ~children:React.element=?
 ) => React.element = "default"
