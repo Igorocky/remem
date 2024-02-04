@@ -63,7 +63,7 @@ let validate = (
 
 let makeMapper = (
     typeStr:string,
-    decoder:JSON.t=>option<'a>,
+    decoder:jsonAny=>option<'a>,
 ) => {
     (
         (path,json):jsonAny, 
@@ -71,7 +71,7 @@ let makeMapper = (
         ~default:option<'a>=?, 
         ~defaultFn:option<unit=>'a>=?, 
     ):'a => {
-        switch json->decoder {
+        switch (path,json)->decoder {
             | None => Js.Exn.raiseError(`${typeStr} was expected at '${pathToStr(path)}'.`)
             | Some(val) => Ok(val)->validate(~validator, ~default, ~defaultFn)
         }
@@ -80,7 +80,7 @@ let makeMapper = (
 
 let makeMapperOpt = (
     typeStr:string,
-    decoder:JSON.t=>option<'a>,
+    decoder:jsonAny=>option<'a>,
 ) => {
     (
         (path,json):jsonAny, 
@@ -91,7 +91,7 @@ let makeMapperOpt = (
         switch json->JSON.Decode.null {
             | Some(_) => None
             | None => {
-                switch json->decoder {
+                switch (path,json)->decoder {
                     | None => Js.Exn.raiseError(`${typeStr} was expected at '${pathToStr(path)}'.`)
                     | Some(val) => {
                         validate(
@@ -158,25 +158,30 @@ let makeGetterOpt = (
     }
 }
 
-let toStr = makeMapper("A string", JSON.Decode.string)
-let toStrOpt = makeMapperOpt("A string", JSON.Decode.string)
+let toStr = makeMapper("A string", ((_,json)) => json->JSON.Decode.string)
+let toStrOpt = makeMapperOpt("A string", ((_,json)) => json->JSON.Decode.string)
 let str = makeGetter("A string", toStr)
 let strOpt = makeGetterOpt(toStrOpt)
 
-let toFloat = makeMapper("A number", JSON.Decode.float)
-let toFloatOpt = makeMapperOpt("A number", JSON.Decode.float)
+let toFloat = makeMapper("A number", ((_,json)) => json->JSON.Decode.float)
+let toFloatOpt = makeMapperOpt("A number", ((_,json)) => json->JSON.Decode.float)
 let float = makeGetter("A number", toFloat)
 let floatOpt = makeGetterOpt(toFloatOpt)
 
-let toInt = makeMapper("An integer", json => json->JSON.Decode.float->Option.map(Float.toInt))
-let toIntOpt = makeMapperOpt("An integer", json => json->JSON.Decode.float->Option.map(Float.toInt))
+let toInt = makeMapper("An integer", ((_,json)) => json->JSON.Decode.float->Option.map(Float.toInt))
+let toIntOpt = makeMapperOpt("An integer", ((_,json)) => json->JSON.Decode.float->Option.map(Float.toInt))
 let int = makeGetter("An integer", toInt)
 let intOpt = makeGetterOpt(toIntOpt)
 
-let toBool = makeMapper("A boolean", JSON.Decode.bool)
-let toBoolOpt = makeMapperOpt("A boolean", JSON.Decode.bool)
+let toBool = makeMapper("A boolean", ((_,json)) => json->JSON.Decode.bool)
+let toBoolOpt = makeMapperOpt("A boolean", ((_,json)) => json->JSON.Decode.bool)
 let bool = makeGetter("A boolean", toBool)
 let boolOpt = makeGetterOpt(toBoolOpt)
+
+let toAny = makeMapper("Any json", jsonAny => Some(jsonAny))
+let toAnyOpt = makeMapperOpt("Any json", jsonAny => Some(jsonAny))
+let any = makeGetter("Any json", toAny)
+let anyOpt = makeGetterOpt(toAnyOpt)
 
 let toArr = (
     (path,json):jsonAny,
@@ -335,6 +340,16 @@ let validateRes = (
     ~defaultFn:option<unit=>'a>, 
 ):result<'a,string> => {
     catchExn(() => res->validate(~validator, ~default, ~defaultFn))
+}
+
+let fromJsonAny = (
+    jsonAny:jsonAny, 
+    mapper:jsonAny=>'a,
+    ~validator:option<'a => result<'a,string>>=?, 
+    ~default:option<'a>=?, 
+    ~defaultFn:option<unit=>'a>=?, 
+):result<'a,string> => {
+    catchExn(() => jsonAny->mapper)->validateRes(~validator, ~default, ~defaultFn)
 }
 
 let fromJson = (

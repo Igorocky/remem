@@ -5,6 +5,8 @@ let parseJson: (string, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~def
     => result<'a, string>
 let fromJson: (JSON.t, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~default: 'a=?, ~defaultFn: unit=>'a=?) 
     => result<'a, string>
+let fromJsonAny: (jsonAny, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~default: 'a=?, ~defaultFn: unit=>'a=?) 
+    => result<'a, string>
 
 let toStr: (jsonAny, 
     ~validator: string=>result<string,string>=?, ~default: string=?, ~defaultFn: unit=>string=?) 
@@ -57,6 +59,19 @@ let bool: (jsonObj, string,
 let boolOpt: (jsonObj, string, 
     ~validator: bool=>result<bool,string>=?, ~default: option<bool>=?, ~defaultFn: unit=>option<bool>=?) 
     => option<bool>
+
+let toAny: (jsonAny,
+    ~validator: jsonAny=>result<jsonAny,string>=?, ~default: jsonAny=?, ~defaultFn: unit=>jsonAny=?) 
+    => jsonAny
+let toAnyOpt: (jsonAny, 
+    ~validator: jsonAny=>result<jsonAny,string>=?, ~default: option<jsonAny>=?, ~defaultFn: unit=>option<jsonAny>=?) 
+    => option<jsonAny>
+let any: (jsonObj, string, 
+    ~validator: jsonAny=>result<jsonAny,string>=?, ~default: jsonAny=?, ~defaultFn: unit=>jsonAny=?) 
+    => jsonAny
+let anyOpt: (jsonObj, string, 
+    ~validator: jsonAny=>result<jsonAny,string>=?, ~default: option<jsonAny>=?, ~defaultFn: unit=>option<jsonAny>=?) 
+    => option<jsonAny>
 
 let toArr: (jsonAny, jsonAny => 'a, 
     ~validator:array<'a> => result<array<'a>,string>=?, ~default:array<'a>=?, ~defaultFn:unit=>array<'a>=?) 
