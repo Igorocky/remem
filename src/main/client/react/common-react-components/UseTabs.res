@@ -1,4 +1,4 @@
-open React_common_components
+open Mui_components
 
 type tabId = string
 

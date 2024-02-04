@@ -13,6 +13,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@fontsource/roboto": "^5.0.8",
+    "@mui/icons-material": "^5.15.7",
+    "@mui/material": "^5.15.7",
     "@rescript/core": "^0.6.0",
     "@rescript/react": "^0.11.0",
     "react": "^18.2.0",
@@ -21,10 +26,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.15",
     "mocha": "^10.2.0",
-    "postcss": "^8.4.28",
-    "tailwindcss": "^3.3.3",
     "vite": "^5.0.6"
   }
 }
