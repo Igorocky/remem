@@ -29,3 +29,4 @@ dist-ssr
 .merlin
 /**/*.res.mjs
 /remem.iml
+/src/main/server/remem.sqlite

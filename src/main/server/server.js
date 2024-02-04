@@ -1,5 +1,6 @@
 import express from "express";
 import {execBeMethod} from './Endpoints.res.mjs'
+import * as dao from './Dao.res.mjs'
 const app = express()
 const port = 3000
 
@@ -11,6 +12,8 @@ app.post('/be/:methodName', async (req, res) => {
     console.log('req.body', req.body)
     res.send(await execBeMethod(methodName, req.body))
 })
+
+dao.initDatabase()
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
