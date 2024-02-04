@@ -10,9 +10,9 @@ let execBeMethod = (name:string,data:JSON.t):promise<string> => {
     }
 }
 
-let registerBeMethod = (name:string, inpParser:JSON.t=>result<'a,string>, method:'a => promise<'b>):unit => {
+let registerBeMethod = (name:string, inpParser:jsonAny=>'a, method:'a => promise<'b>):unit => {
     beEndpoints->Belt.HashMap.String.set(name, json => {
-        switch json->inpParser {
+        switch fromJson(json, inpParser) {
             | Error(msg) => {
                 Js.Exn.raiseError(`Error parsing input request for the BE method '${name}': ${msg}`)
             }
@@ -23,9 +23,7 @@ let registerBeMethod = (name:string, inpParser:JSON.t=>result<'a,string>, method
 
 registerBeMethod(
     method1,
-    fromJson(_, toObj(_, o => {
-        text: o->str("text")
-    })),
+    method1ReqParser,
     (req:method1Req) => {
         Promise.resolve(
             {
