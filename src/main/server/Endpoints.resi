@@ -1,0 +1,1 @@
+let execBeMethod: (string,JSON.t) => promise<string>

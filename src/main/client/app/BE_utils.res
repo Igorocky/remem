@@ -37,7 +37,7 @@ type beFunc<'req,'resp> = 'req => promise<result<'resp,string>>
 
 let createBeFunc = (url:string, respMapper:jsonAny => 'resp): beFunc<'req,'resp> => {
     req => {
-        fetch(url, {
+        fetch("/be/" ++ url, {
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json;charset=UTF-8"

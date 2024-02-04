@@ -1,11 +1,11 @@
 open Mui_components
 open React_utils
-open Dtos
 open BE_utils
+open Dtos
 
 let method1:beFunc<method1Req, method1Res> = {
     open Json_parse
-    createBeFunc("/method1", toObj(_, o => { len: o->int("len") }) )
+    createBeFunc(method1, toObj(_, o => { len: o->int("len") }) )
 }
 
 @react.component
