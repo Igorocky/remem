@@ -10,7 +10,7 @@ let execBeMethod = (name:string,data:JSON.t):promise<string> => {
     }
 }
 
-let registerBeMethod = (name:string, inpParser:jsonAny=>'a, method:'a => promise<'b>):unit => {
+let registerBeFuncPriv = (name:string, inpParser:jsonAny=>'a, method:'a => promise<'b>):unit => {
     beEndpoints->Belt.HashMap.String.set(name, json => {
         switch fromJson(json, inpParser) {
             | Error(msg) => {
@@ -33,16 +33,10 @@ let registerBeMethod = (name:string, inpParser:jsonAny=>'a, method:'a => promise
     })
 }
 
-registerBeMethod(
-    Dtos.method1,
-    Dtos.method1ReqParser,
-    (req:Dtos.method1Req) => {
-        Promise.resolve(
-            {
-                Dtos.len: req.text->String.length
-            }
-        )
-    }
-)
+// https://forum.rescript-lang.org/t/how-to-use-the-first-class-module-in-rescript/3238/5
+let registerBeFunc = (type req, type res, m:Dtos.beFuncModule<req,res>, func:req => promise<res>): unit => {
+    module M = unpack(m)
+    registerBeFuncPriv( M.name, M.parseReq, func )
+}
 
-registerBeMethod( Dtos.getAllTags, Dtos.getAllTagsReqParser, Dao.getAllTags )
+registerBeFunc( module(Dtos.GetAllTags), Dao.getAllTags )

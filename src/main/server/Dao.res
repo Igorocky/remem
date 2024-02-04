@@ -21,10 +21,10 @@ let initDatabase = () => {
     }
 }
 
-let getAllTags = ():promise<Dtos.getAllTagsRes> => {
+let getAllTags = ():promise<Dtos.GetAllTags.res> => {
     Promise.resolve(
         {
-            Dtos.tags: [
+            Dtos.GetAllTags.tags: [
                 {id:1.0, name:"T1"},
                 {id:2.0, name:"T2"},
             ]

@@ -35,7 +35,7 @@ let parseBeResp = (respStr:string, dataMapper:jsonAny=>'a): result<'a,string> =>
 
 type beFunc<'req,'resp> = 'req => promise<result<'resp,string>>
 
-let createBeFunc = (url:string, respMapper:jsonAny => 'resp): beFunc<'req,'resp> => {
+let createBeFuncPriv = (url:string, respMapper:jsonAny => 'resp): beFunc<'req,'resp> => {
     req => {
         fetch("/be/" ++ url, {
             "method": "POST",
@@ -47,4 +47,10 @@ let createBeFunc = (url:string, respMapper:jsonAny => 'resp): beFunc<'req,'resp>
             ->Promise.then(res => res["text"]())
             ->Promise.thenResolve(text => parseBeResp(text,respMapper))
     }
+}
+
+// https://forum.rescript-lang.org/t/how-to-use-the-first-class-module-in-rescript/3238/5
+let createBeFunc = (type req, type res, m:Dtos.beFuncModule<req,res>): beFunc<req,res> => {
+    module M = unpack(m)
+    createBeFuncPriv(M.name, M.parseRes)
 }

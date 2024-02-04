@@ -1,5 +1,15 @@
 open Json_parse
 
+module type BeFunction = {
+    let name: string
+    type req
+    type res
+    let parseReq: jsonAny => req
+    let parseRes: jsonAny => res
+}
+
+type beFuncModule<'req,'res> = module(BeFunction with type req = 'req and type res = 'res)
+
 let method1 = "method1"
 type method1Req = {
     text:string
@@ -16,15 +26,23 @@ type tagDto = {
     id:float,
     name:string,
 }
-let getAllTags = "getAllTags"
-type getAllTagsReq = unit
-let getAllTagsReqParser:jsonAny=>getAllTagsReq = _ => ()
-type getAllTagsRes = {
-    tags:array<tagDto>
-}
-let getAllTagsResParser:jsonAny=>getAllTagsRes = toObj(_, o => { 
-    tags: o->arr("tags", toObj(_, o => {
-        id: o->float("id"),
-        name: o->str("name"),
-    })) 
+let parseTagDto:jsonAny=>tagDto = toObj(_, o => {
+    id: o->float("id"),
+    name: o->str("name"),
 })
+
+module GetAllTags = {
+    let name = "getAllTags"
+
+    type req = unit
+
+    let parseReq = _ => ()
+
+    type res = {
+        tags:array<tagDto>
+    }
+
+    let parseRes = toObj(_, o => { 
+        tags: o->arr("tags", parseTagDto) 
+    })
+}

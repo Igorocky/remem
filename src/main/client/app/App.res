@@ -3,8 +3,7 @@ open React_utils
 open BE_utils
 open Dtos
 
-let method1:beFunc<Dtos.method1Req, Dtos.method1Res> = createBeFunc(Dtos.method1, Dtos.method1ResParser)
-let getAllTags:beFunc<Dtos.getAllTagsReq, Dtos.getAllTagsRes> = createBeFunc(Dtos.getAllTags, Dtos.getAllTagsResParser)
+let getAllTags:beFunc<Dtos.GetAllTags.req, Dtos.GetAllTags.res> = createBeFunc(module(GetAllTags))
 
 @react.component
 let make = () => {
