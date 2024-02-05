@@ -42,3 +42,9 @@ let createTag = (req:Dtos.CreateTag.req):promise<Dtos.CreateTag.res> => {
     db.contents->dbPrepare(insertTagQuery)->stmtRunWithParams({"name":req.name})->ignore
     getAllTags()
 }
+
+let deleteTagsQuery = `delete from ${S.tagTbl} where id in (:ids)`
+let deleteTags = (req:Dtos.DeleteTags.req):promise<Dtos.DeleteTags.res> => {
+    db.contents->dbPrepare(deleteTagsQuery)->stmtRunWithParams({"ids":req.ids})->ignore
+    getAllTags()
+}

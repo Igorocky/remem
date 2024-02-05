@@ -40,3 +40,19 @@ module CreateTag = {
 
     let parseRes = GetAllTags.parseRes
 }
+
+module DeleteTags = {
+    let name = "deleteTags"
+
+    type req = {
+        ids: array<float>
+    }
+
+    let parseReq = toObj(_, o => { 
+        ids: o->arr("ids", toFloat(_)) 
+    })
+
+    type res = GetAllTags.res
+
+    let parseRes = GetAllTags.parseRes
+}

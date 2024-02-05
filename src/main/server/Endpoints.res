@@ -41,3 +41,4 @@ let registerBeFunc = (type req, type res, m:Dto_utils.beFuncModule<req,res>, fun
 
 registerBeFunc( module(Dtos.GetAllTags), Dao.getAllTags )
 registerBeFunc( module(Dtos.CreateTag), Dao.createTag )
+registerBeFunc( module(Dtos.DeleteTags), Dao.deleteTags )

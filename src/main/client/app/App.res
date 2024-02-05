@@ -4,6 +4,7 @@ open BE_utils
 
 let getAllTags:beFunc<Dtos.GetAllTags.req, Dtos.GetAllTags.res> = createBeFunc(module(Dtos.GetAllTags))
 let createTag = createBeFunc(module(Dtos.CreateTag))
+let deleteTags = createBeFunc(module(Dtos.DeleteTags))
 
 @react.component
 let make = () => {
