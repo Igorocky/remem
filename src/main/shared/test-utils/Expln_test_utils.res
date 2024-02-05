@@ -5,7 +5,8 @@ let panic = Error.panic
 @val external describe: (string, unit=>unit) => unit = "describe"
 @val external describe_skip: (string, unit=>unit) => unit = "describe.skip"
 @val external itPriv: (string, unit=>unit) => unit = "it"
-@val external it_skip: (string, unit=>unit) => unit = "it.skip"
+@val external itAsync: (string, unit=>promise<unit>) => unit = "it"
+@val external itSkip: (string, unit=>unit) => unit = "it.skip"
 
 let it = (name:string, test:unit=>unit):unit => {
     itPriv(name, () => {

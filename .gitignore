@@ -30,3 +30,4 @@ dist-ssr
 /**/*.res.mjs
 /remem.iml
 /src/main/server/remem.sqlite
+/remem.sqlite

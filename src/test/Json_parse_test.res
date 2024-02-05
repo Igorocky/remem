@@ -3,11 +3,6 @@ open Json_parse
 
 let {log,log2} = module(Console)
 
-type param = {
-    name: string,
-    value: string,
-}
-
 describe("parseJson", () => {
     it("parses a simple object", () => {
         //given
@@ -62,8 +57,8 @@ describe("parseJson", () => {
         //when
         let p = parseJson( jsonStr, toObj(_, o => 
             {
-                name: o->str("name"),
-                value: o->str("value"),
+                "name": o->str("name"),
+                "value": o->str("value"),
             }
         ))
 
@@ -80,8 +75,8 @@ describe("parseJson", () => {
         //when
         let p = parseJson( jsonStr, toObj(_, o => 
             {
-                name: o->str("name"),
-                value: o->str("value"),
+                "name": o->str("name"),
+                "value": o->str("value"),
             }
         ))
 
@@ -101,8 +96,8 @@ describe("parseJson", () => {
         //when
         let p = parseJson( jsonStr, toObj(_, o => 
             {
-                name: o->str("name"),
-                value: o->str("value"),
+                "name": o->str("name"),
+                "value": o->str("value"),
             }
         ))
 
@@ -121,8 +116,8 @@ describe("parseJson", () => {
         //when
         let p = parseJson( jsonStr, toObj(_, o => 
             {
-                name: o->str("name"),
-                value: o->str("value"),
+                "name": o->str("name"),
+                "value": o->str("value"),
             }
         ))
 
@@ -141,8 +136,8 @@ describe("toObjOpt", _ => {
 
         //when
         let p = parseJson(jsonStr, toObjOpt(_, o => {
-            name: o->str("name"),
-            value: o->str("value"),
+            "name": o->str("name"),
+            "value": o->str("value"),
         }))
 
         //then
