@@ -3,10 +3,16 @@ type jsonObj
 
 let parseJson: (string, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~default: 'a=?, ~defaultFn: unit=>'a=?) 
     => result<'a, string>
+let parseJsonExn: (string, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~default: 'a=?, ~defaultFn: unit=>'a=?) 
+    => 'a
 let fromJson: (JSON.t, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~default: 'a=?, ~defaultFn: unit=>'a=?) 
     => result<'a, string>
+let fromJsonExn: (JSON.t, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~default: 'a=?, ~defaultFn: unit=>'a=?) 
+    => 'a
 let fromJsonAny: (jsonAny, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~default: 'a=?, ~defaultFn: unit=>'a=?) 
     => result<'a, string>
+let fromJsonAnyExn: (jsonAny, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~default: 'a=?, ~defaultFn: unit=>'a=?) 
+    => 'a
 
 let toStr: (jsonAny, 
     ~validator: string=>result<string,string>=?, ~default: string=?, ~defaultFn: unit=>string=?) 

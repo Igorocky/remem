@@ -1,12 +1,12 @@
-let tags = "TAGS"
-let tagsId = "ID"
-let tagsName = "NAME"
-let tagsCrtTime = "CRT_TIME"
+let tagTbl = "TAG"
+let tagId = "ID"
+let tagName = "NAME"
+let tagCrtTime = "CRT_TIME"
 
 let dbSchemaV1 = `
-create table if not exists ${tags} (
-    ${tagsId} integer primary key,
-    ${tagsName} text not null,
-    ${tagsCrtTime} real not null default ( unixepoch() * 1000 )
+create table if not exists ${tagTbl} (
+    ${tagId} integer primary key,
+    ${tagName} text not null,
+    ${tagCrtTime} real not null default ( unixepoch() * 1000 )
 ) strict;
 `

@@ -352,6 +352,19 @@ let fromJsonAny = (
     catchExn(() => jsonAny->mapper)->validateRes(~validator, ~default, ~defaultFn)
 }
 
+let fromJsonAnyExn = (
+    jsonAny:jsonAny, 
+    mapper:jsonAny=>'a,
+    ~validator:option<'a => result<'a,string>>=?, 
+    ~default:option<'a>=?, 
+    ~defaultFn:option<unit=>'a>=?, 
+):'a => {
+    switch fromJsonAny(jsonAny, mapper, ~validator?, ~default?, ~defaultFn?) {
+        | Error(msg) => Js.Exn.raiseError(msg)
+        | Ok(value) => value
+    }
+}
+
 let fromJson = (
     json:JSON.t, 
     mapper:jsonAny=>'a,
@@ -362,6 +375,19 @@ let fromJson = (
     catchExn(() => (rootPath, json)->mapper)->validateRes(~validator, ~default, ~defaultFn)
 }
 
+let fromJsonExn = (
+    json:JSON.t, 
+    mapper:jsonAny=>'a,
+    ~validator:option<'a => result<'a,string>>=?, 
+    ~default:option<'a>=?, 
+    ~defaultFn:option<unit=>'a>=?, 
+):'a => {
+    switch fromJson(json, mapper, ~validator?, ~default?, ~defaultFn?) {
+        | Error(msg) => Js.Exn.raiseError(msg)
+        | Ok(value) => value
+    }
+}
+
 let parseJson = (
     jsonStr:string, 
     mapper:jsonAny=>'a, 
@@ -370,4 +396,17 @@ let parseJson = (
     ~defaultFn:option<unit=>'a>=?, 
 ):result<'a,string> => {
     catchExn(() => (rootPath, JSON.parseExn(jsonStr))->mapper)->validateRes(~validator, ~default, ~defaultFn)
+}
+
+let parseJsonExn = (
+    jsonStr:string, 
+    mapper:jsonAny=>'a, 
+    ~validator:option<'a => result<'a,string>>=?, 
+    ~default:option<'a>=?, 
+    ~defaultFn:option<unit=>'a>=?, 
+):'a => {
+    switch parseJson(jsonStr, mapper, ~validator?, ~default?, ~defaultFn?) {
+        | Error(msg) => Js.Exn.raiseError(msg)
+        | Ok(value) => value
+    }
 }

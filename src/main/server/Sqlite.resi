@@ -10,3 +10,5 @@ let dbPragmaFull: (database,string) => array<{..}>
 
 let stmtRun: statement => statementCompletionInfo
 let stmtRunWithParams: (statement,'a) => statementCompletionInfo
+let stmtAll: (statement) => array<JSON.t>
+let stmtAllWithParams: (statement,'a) => array<JSON.t>

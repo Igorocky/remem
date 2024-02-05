@@ -50,7 +50,7 @@ let createBeFuncPriv = (url:string, respMapper:jsonAny => 'resp): beFunc<'req,'r
 }
 
 // https://forum.rescript-lang.org/t/how-to-use-the-first-class-module-in-rescript/3238/5
-let createBeFunc = (type req, type res, m:Dtos.beFuncModule<req,res>): beFunc<req,res> => {
+let createBeFunc = (type req, type res, m:Dto_utils.beFuncModule<req,res>): beFunc<req,res> => {
     module M = unpack(m)
     createBeFuncPriv(M.name, M.parseRes)
 }

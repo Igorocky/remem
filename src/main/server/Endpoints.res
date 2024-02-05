@@ -34,9 +34,10 @@ let registerBeFuncPriv = (name:string, inpParser:jsonAny=>'a, method:'a => promi
 }
 
 // https://forum.rescript-lang.org/t/how-to-use-the-first-class-module-in-rescript/3238/5
-let registerBeFunc = (type req, type res, m:Dtos.beFuncModule<req,res>, func:req => promise<res>): unit => {
+let registerBeFunc = (type req, type res, m:Dto_utils.beFuncModule<req,res>, func:req => promise<res>): unit => {
     module M = unpack(m)
     registerBeFuncPriv( M.name, M.parseReq, func )
 }
 
 registerBeFunc( module(Dtos.GetAllTags), Dao.getAllTags )
+registerBeFunc( module(Dtos.CreateTag), Dao.createTag )

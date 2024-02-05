@@ -1,9 +1,9 @@
 open Mui_components
 open React_utils
 open BE_utils
-open Dtos
 
-let getAllTags:beFunc<Dtos.GetAllTags.req, Dtos.GetAllTags.res> = createBeFunc(module(GetAllTags))
+let getAllTags:beFunc<Dtos.GetAllTags.req, Dtos.GetAllTags.res> = createBeFunc(module(Dtos.GetAllTags))
+let createTag = createBeFunc(module(Dtos.CreateTag))
 
 @react.component
 let make = () => {
