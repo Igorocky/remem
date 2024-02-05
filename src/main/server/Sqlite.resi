@@ -8,7 +8,7 @@ let dbPrepare: (database,string) => statement
 let dbPragma: (database, string) => 'a
 let dbPragmaFull: (database,string) => array<{..}>
 
-let stmtRun: statement => statementCompletionInfo
-let stmtRunWithParams: (statement,'a) => statementCompletionInfo
-let stmtAll: (statement) => array<JSON.t>
-let stmtAllWithParams: (statement,'a) => array<JSON.t>
+let stmtRun: (statement,'a) => statementCompletionInfo
+let stmtRunNp: statement => statementCompletionInfo
+let stmtAll: (statement,'a) => array<JSON.t>
+let stmtAllNp: (statement) => array<JSON.t>
