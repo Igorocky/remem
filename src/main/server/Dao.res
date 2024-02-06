@@ -2,8 +2,6 @@ open Sqlite
 
 module S = DB_schema
 
-let db = ref(makeDatabase("./remem.sqlite"))
-
 let initDatabase = (db:database) => {
     let latestSchemaVersion = 1
     switch db->dbPragma("user_version") {
@@ -28,12 +26,6 @@ let getAllTags = (db:database):promise<Dtos.GetAllTags.res> => {
             Dtos.GetAllTags.tags: db->dbPrepare(getAllTagsQuery)->stmtAllNp
                 ->Array.map(Json_parse.fromJsonExn(_,Dtos.parseTagDto))
         }
-        // {
-        //     Dtos.GetAllTags.tags: [
-        //         {id:1.0, name:"T1"},
-        //         {id:2.0, name:"T2"},
-        //     ]
-        // }
     )
 }
 

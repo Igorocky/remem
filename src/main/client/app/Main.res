@@ -4,7 +4,7 @@ switch ReactDOM.querySelector("#root") {
     | Some(domElement) => {
         ReactDOM.Client.createRoot(domElement)->ReactDOM.Client.Root.render(
             <React.StrictMode>
-            <App />
+            <Cmp_root />
             </React.StrictMode>,
         )
     }

@@ -9,9 +9,9 @@ let createTag = createBeFunc(module(Dtos.CreateTag))
 let deleteTags = createBeFunc(module(Dtos.DeleteTags))
 
 @react.component
-let make = () => {
-    let modalRef = useModalRef()
-
+let make = (
+    ~modalRef:modalRef,
+) => {
     let (count, setCount) = React.useState(() => 0)
 
     let orErr = orShowErr(_, modalRef)
@@ -26,10 +26,7 @@ let make = () => {
         actSendReqToBe()->ignore
     }
 
-    <Col>
-        <Button onClick=clickHnd(~act=clickAction)>
-            {React.string(`count is ${count->Int.toString}`)}
-        </Button>
-        <Modal modalRef />
-    </Col>
+    <Button onClick=clickHnd(~act=clickAction)>
+        {React.string(`count is ${count->Int.toString}`)}
+    </Button>
 }

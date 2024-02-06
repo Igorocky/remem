@@ -18,7 +18,7 @@ type state<'a> = {
 }
 
 type tabMethods<'a> = {
-    addTab: (~label:string, ~closable:bool, ~color:string=?, ~data:'a, ~doOpen:bool=?, ()) => promise<tabId>,
+    addTab: (~label:string, ~closable:bool, ~color:string=?, ~data:'a, ~doOpen:bool=?) => promise<tabId>,
     openTab: tabId => unit,
     removeTab: tabId => unit,
     tabs: array<tab<'a>>,
@@ -43,7 +43,7 @@ let getNextId = st => {
 
 let getTabs = (st:state<'a>) => st.tabs
 
-let addTab = (st, ~label:string, ~closable:bool, ~color:option<string>=?, ~data:'a, ~doOpen:bool=false, ()) => {
+let addTab = (st, ~label:string, ~closable:bool, ~color:option<string>=?, ~data:'a, ~doOpen:bool=false) => {
     let (st, newId) = st->getNextId
     let newTabs = st.tabs->Js_array2.concat([{id:newId, label, closable, color, data}])
     let newActiveTabId = if (newTabs->Js_array2.length == 1) {
@@ -109,9 +109,9 @@ let removeTab = (st:state<'a>, tabId):state<'a> => {
 let useTabs = ():tabMethods<'a> => {
     let (state, setState) = React.useState(createEmptyState)
 
-    let addTab = (~label:string, ~closable:bool, ~color:option<string>=?, ~data:'a, ~doOpen:bool=false, ()):promise<tabId> => Promise.make((rlv,_) => {
+    let addTab = (~label:string, ~closable:bool, ~color:option<string>=?, ~data:'a, ~doOpen:bool=false):promise<tabId> => Promise.make((rlv,_) => {
         setState(prev => {
-            let (st, tabId) = prev->addTab(~label, ~closable, ~color?, ~data, ~doOpen, ())
+            let (st, tabId) = prev->addTab(~label, ~closable, ~color?, ~data, ~doOpen)
             rlv(tabId)
             st
         })
