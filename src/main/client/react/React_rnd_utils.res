@@ -131,7 +131,7 @@ let openYesNoDialog = async (
     })
 }
 
-let rndSmallTextBtn = ( ~onClick:unit=>unit, ~text:string, ~color:string="grey"):React.element => {
+let rndSmallTextBtn = (~text:string, ~color:string="grey", ~onClick:unit=>unit):React.element => {
     <span
         onClick={_=> onClick() }
         style=ReactDOM.Style.make( 
@@ -176,4 +176,20 @@ let rndColorSelect = (
             }
         </Select>
     </FormControl>
+}
+
+let orShowErr = async (res:promise<result<'a,string>>, modalRef:modalRef): 'a => {
+    switch (await res) {
+        | Error(msg) => {
+            (await openYesNoDialog(
+                ~modalRef, 
+                ~title = "Internal error", 
+                ~icon = <Icons.ReportGmailerrorred style=ReactDOM.Style.make(~color="red", ())/>,
+                ~text = msg, 
+                ~textYes = "OK", 
+            ))->ignore
+            Js.Exn.raiseError(msg)
+        }
+        | Ok(data) => data
+    }
 }

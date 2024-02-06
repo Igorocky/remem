@@ -33,6 +33,7 @@ module Menu = { @module("@mui/icons-material/Menu") @react.component external ma
 module Pause = { @module("@mui/icons-material/Pause") @react.component external make: (~style: ReactDOMStyle.t=?) => React.element = "default" }
 module PlayArrow = { @module("@mui/icons-material/PlayArrow") @react.component external make: (~style: ReactDOMStyle.t=?) => React.element = "default" }
 module Restore = { @module("@mui/icons-material/Restore") @react.component external make: (~style: ReactDOMStyle.t=?) => React.element = "default" }
+module ReportGmailerrorred = { @module("@mui/icons-material/ReportGmailerrorred") @react.component external make: (~style: ReactDOMStyle.t=?) => React.element = "default" }
 module PriorityHigh = { @module("@mui/icons-material/PriorityHigh") @react.component external make: (~style: ReactDOMStyle.t=?) => React.element = "default" }
 module Save = { @module("@mui/icons-material/Save") @react.component external make: () => React.element = "default" }
 module Search = { @module("@mui/icons-material/Search") @react.component external make: () => React.element = "default" }
