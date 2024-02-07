@@ -19,7 +19,7 @@ let initDatabase = (db:database) => {
     }
 }
 
-let getAllTagsQuery = `select ${S.tagId}||'' id, ${S.tagName} name from ${S.tagTbl}`
+let getAllTagsQuery = `select ${S.tagId}||'' id, ${S.tagName} name from ${S.tagTbl} order by ${S.tagName}`
 let getAllTags = (db:database):promise<Dtos.GetAllTags.res> => {
     Promise.resolve(
         {

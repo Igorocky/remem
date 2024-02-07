@@ -20,10 +20,11 @@ let modalRefToModalMethods: modalRef => modalMethods = modalRef => {
         | Some(modalMethods) => modalMethods
     }
 }
-
-let openModal = (modalRef:modalRef, render:unit=>React.element):promise<modalId> => modalRefToModalMethods(modalRef).openModal(render)
-let openModalFullScreen = (modalRef:modalRef, render:unit=>React.element):promise<modalId> => modalRefToModalMethods(modalRef).openModalFullScreen(render)
-let updateModal = (modalRef:modalRef, modalId:modalId, render:unit=>React.element):unit => modalRefToModalMethods(modalRef).updateModal(modalId, render)
+let openModal = (modalRef:modalRef, render:modalId=>React.element):unit => {
+    modalRefToModalMethods(modalRef).openModal(_=>React.null)->Promise.thenResolve(modalId => {
+        modalRefToModalMethods(modalRef).updateModal(modalId, () => render(modalId))
+    })->ignore
+}
 let closeModal = (modalRef:modalRef, modalId:modalId):unit => modalRefToModalMethods(modalRef).closeModal(modalId)
 
 type modal = {

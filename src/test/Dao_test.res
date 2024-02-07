@@ -67,7 +67,7 @@ describe("Dao:tags", () => {
         //then
         assertEqMsg(
             allTags, 
-            {tags:[{id:"1",name:"test-tag-1"},{id:"2",name:"updated-name"},{id:"3",name:"test-tag-3"}]},
+            {tags:[{id:"1",name:"test-tag-1"},{id:"3",name:"test-tag-3"},{id:"2",name:"updated-name"}]},
             "after update"
         )
     })

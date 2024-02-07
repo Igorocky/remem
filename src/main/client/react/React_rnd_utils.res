@@ -95,7 +95,7 @@ let rndYesNoDialog = (
     </Paper>
 }
 
-let openYesNoDialog = async (
+let openYesNoDialog = (
     ~modalRef:modalRef, 
     ~title:option<string>=?, 
     ~icon:option<React.element>=?,
@@ -103,10 +103,9 @@ let openYesNoDialog = async (
     ~content:option<React.element>=?, 
     ~textYes:option<string>=?, 
     ~textNo:option<string>=?, 
-):bool => {
-    let modalId = await openModal(modalRef, _ => React.null)
-    await Promise.make((rlv,_) => {
-        updateModal(modalRef, modalId, () => {
+):promise<bool> => {
+    Promise.make((rlv,_) => {
+        openModal(modalRef, modalId => {
             rndYesNoDialog(
                 ~title,
                 ~icon,

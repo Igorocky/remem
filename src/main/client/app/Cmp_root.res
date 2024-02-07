@@ -1,5 +1,4 @@
 open Mui_components
-open React_utils
 open BE_utils
 open React_rnd_utils
 open Modal
@@ -32,12 +31,19 @@ let makeState = ():state => {
     }
 }
 
+let getAllTags:beFunc<Dtos.GetAllTags.req, Dtos.GetAllTags.res> = createBeFunc(module(Dtos.GetAllTags))
+let createTag = createBeFunc(module(Dtos.CreateTag))
+let updateTag = createBeFunc(module(Dtos.UpdateTag))
+let deleteTags = createBeFunc(module(Dtos.DeleteTags))
+
 @react.component
 let make = () => {
     let modalRef = useModalRef()
-    let {tabs, addTab, openTab, removeTab, renderTabs, updateTabs, activeTabId} = UseTabs.useTabs()
+    let {tabs, renderTabs, updateTabs, activeTabId} = UseTabs.useTabs()
 
     let (state, setState) = React.useState(makeState)
+
+    let getExn = getExn(_, modalRef)
 
     React.useEffect0(()=>{
         updateTabs(st => {
@@ -49,15 +55,27 @@ let make = () => {
                 st
             }
         })
+        getAllTags()->getExn->Promise.thenResolve(res => setState(_ => {allTags:Some(res.tags)}))->ignore
         None
     })
 
-    let rndTabContent = (top:int, tab:UseTabs.tab<'a>, allTags:array<Dtos.tagDto>) => {
+    let actCreateTag = async (tag:Dtos.tagDto):unit => {
+        let res:Dtos.CreateTag.res = await createTag({name:tag.name})->getExn
+        setState(_ => {allTags:Some(res.tags)})
+    }
+
+    let rndTabContent = (tab:UseTabs.tab<'a>, allTags:array<Dtos.tagDto>) => {
         <div key=tab.id style=ReactDOM.Style.make(~display=if (tab.id == activeTabId) {"block"} else {"none"}, ())>
             {
                 switch tab.data {
-                    | Tags => <Cmp_tags modalRef allTags />
-                    | Search => "Search will be here"->React.string
+                    | Tags => {
+                        <Cmp_tag_list 
+                            modalRef 
+                            allTags 
+                            createTag = {tag => actCreateTag(tag)->ignore}
+                        />
+                    }
+                    | Search => "Search will be here."->React.string
                 }
             }
         </div>
@@ -70,9 +88,9 @@ let make = () => {
                 <ContentWithStickyHeader
                     top=0
                     header=renderTabs()
-                    content={contentTop => {
+                    content={_ => {
                         <Col>
-                            {React.array(tabs->Js_array2.map(rndTabContent(contentTop, _, allTags)))}
+                            {React.array(tabs->Js_array2.map(rndTabContent(_, allTags)))}
                             <Modal modalRef />
                         </Col>
                     }}
