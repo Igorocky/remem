@@ -178,7 +178,7 @@ let rndColorSelect = (
     </FormControl>
 }
 
-let orShowErr = async (res:promise<result<'a,string>>, modalRef:modalRef): 'a => {
+let getExn = async (res:promise<result<'a,string>>, modalRef:modalRef): 'a => {
     switch (await res) {
         | Error(msg) => {
             (await openYesNoDialog(

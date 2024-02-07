@@ -21,4 +21,4 @@ let rndColorSelect: (
   ~label: string=?,
 ) => React.element
 
-let orShowErr: (promise<result<'a,string>>, modalRef) => promise<'a>
+let getExn: (promise<result<'a,string>>, modalRef) => promise<'a>
