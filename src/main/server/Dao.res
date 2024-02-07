@@ -19,7 +19,7 @@ let initDatabase = (db:database) => {
     }
 }
 
-let getAllTagsQuery = `select ${S.tagId} id, ${S.tagName} name from ${S.tagTbl}`
+let getAllTagsQuery = `select ${S.tagId}||'' id, ${S.tagName} name from ${S.tagTbl}`
 let getAllTags = (db:database):promise<Dtos.GetAllTags.res> => {
     Promise.resolve(
         {
@@ -31,7 +31,13 @@ let getAllTags = (db:database):promise<Dtos.GetAllTags.res> => {
 
 let insertTagQuery = `insert into ${S.tagTbl}(${S.tagName}) values (:name)`
 let createTag = (db:database, req:Dtos.CreateTag.req):promise<Dtos.CreateTag.res> => {
-    db->dbPrepare(insertTagQuery)->stmtRun({"name":req.name})->ignore
+    db->dbPrepare(insertTagQuery)->stmtRun(req)->ignore
+    getAllTags(db)
+}
+
+let updateTagQuery = `update ${S.tagTbl} set ${S.tagName} = :name where ${S.tagId} = :id`
+let updateTag = (db:database, req:Dtos.UpdateTag.req):promise<Dtos.UpdateTag.res> => {
+    db->dbPrepare(updateTagQuery)->stmtRun(req)->ignore
     getAllTags(db)
 }
 

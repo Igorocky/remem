@@ -13,19 +13,19 @@ describe("Dao:tags", () => {
         let allTags = await db->createTag({name:"test-tag-1"})
 
         //then
-        assertEq(allTags, {tags:[{id:1.,name:"test-tag-1"}]})
+        assertEq(allTags, {tags:[{id:"1",name:"test-tag-1"}]})
 
         //when
         let allTags = await db->createTag({name:"test-tag-2"})
 
         //then
-        assertEq(allTags, {tags:[{id:1.,name:"test-tag-1"},{id:2.,name:"test-tag-2"}]})
+        assertEq(allTags, {tags:[{id:"1",name:"test-tag-1"},{id:"2",name:"test-tag-2"}]})
 
         //when
         let allTags = await db->createTag({name:"test-tag-3"})
 
         //then
-        assertEq(allTags, {tags:[{id:1.,name:"test-tag-1"},{id:2.,name:"test-tag-2"},{id:3.,name:"test-tag-3"}]})
+        assertEq(allTags, {tags:[{id:"1",name:"test-tag-1"},{id:"2",name:"test-tag-2"},{id:"3",name:"test-tag-3"}]})
     })
 
     itAsync("deletes existing tags", async () => {
@@ -37,14 +37,38 @@ describe("Dao:tags", () => {
         let allTags = await db->createTag({name:"test-tag-3"})
         assertEqMsg(
             allTags, 
-            {tags:[{id:1.,name:"test-tag-1"},{id:2.,name:"test-tag-2"},{id:3.,name:"test-tag-3"}]},
+            {tags:[{id:"1",name:"test-tag-1"},{id:"2",name:"test-tag-2"},{id:"3",name:"test-tag-3"}]},
             "prepare test data"
         )
 
         //when
-        let allTags = await db->deleteTags({ids:[1.,3.]})
+        let allTags = await db->deleteTags({ids:["1","3"]})
 
         //then
-        assertEq(allTags, {tags:[{id:2.,name:"test-tag-2"}]})
+        assertEqMsg(allTags, {tags:[{id:"2",name:"test-tag-2"}]}, "after delete")
+    })
+
+    itAsync("updates existing tag", async () => {
+        //given
+        let db = Sqlite.makeDatabase(":memory:")
+        Dao.initDatabase(db)
+        (await db->createTag({name:"test-tag-1"}))->ignore
+        (await db->createTag({name:"test-tag-2"}))->ignore
+        let allTags = await db->createTag({name:"test-tag-3"})
+        assertEqMsg(
+            allTags, 
+            {tags:[{id:"1",name:"test-tag-1"},{id:"2",name:"test-tag-2"},{id:"3",name:"test-tag-3"}]},
+            "prepare test data"
+        )
+
+        //when
+        let allTags = await db->updateTag({id:"2", name:"updated-name"})
+
+        //then
+        assertEqMsg(
+            allTags, 
+            {tags:[{id:"1",name:"test-tag-1"},{id:"2",name:"updated-name"},{id:"3",name:"test-tag-3"}]},
+            "after update"
+        )
     })
 })

@@ -60,6 +60,7 @@ let makeEndpoints = (db:Sqlite.database):endpoints => {
     let endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<string>> = Belt.HashMap.String.make(~hintSize=100)
     registerBeFunc(endpointsMap, module(Dtos.GetAllTags), () => Dao.getAllTags(db) )
     registerBeFunc(endpointsMap, module(Dtos.CreateTag), Dao.createTag(db, _) )
+    registerBeFunc(endpointsMap, module(Dtos.UpdateTag), Dao.updateTag(db, _) )
     registerBeFunc(endpointsMap, module(Dtos.DeleteTags), Dao.deleteTags(db, _) )
     {
         execBeFunc: execBeMethod(endpointsMap, ...)

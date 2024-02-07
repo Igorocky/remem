@@ -8,6 +8,7 @@ open Modal
 
 let getAllTags:beFunc<Dtos.GetAllTags.req, Dtos.GetAllTags.res> = createBeFunc(module(Dtos.GetAllTags))
 let createTag = createBeFunc(module(Dtos.CreateTag))
+let updateTag = createBeFunc(module(Dtos.UpdateTag))
 let deleteTags = createBeFunc(module(Dtos.DeleteTags))
 
 @react.component

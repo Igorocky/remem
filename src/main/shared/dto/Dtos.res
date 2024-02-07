@@ -1,11 +1,11 @@
 open Json_parse
 
 type tagDto = {
-    id:float,
+    id:string,
     name:string,
 }
 let parseTagDto:jsonAny=>tagDto = toObj(_, o => {
-    id: o->float("id"),
+    id: o->str("id"),
     name: o->str("name"),
 })
 
@@ -41,15 +41,27 @@ module CreateTag = {
     let parseRes = GetAllTags.parseRes
 }
 
+module UpdateTag = {
+    let name = "updateTag"
+
+    type req = tagDto
+
+    let parseReq = parseTagDto
+
+    type res = GetAllTags.res
+
+    let parseRes = GetAllTags.parseRes
+}
+
 module DeleteTags = {
     let name = "deleteTags"
 
     type req = {
-        ids: array<float>
+        ids: array<string>
     }
 
     let parseReq = toObj(_, o => { 
-        ids: o->arr("ids", toFloat(_)) 
+        ids: o->arr("ids", toStr(_)) 
     })
 
     type res = GetAllTags.res
