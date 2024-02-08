@@ -41,6 +41,10 @@ let make = (
                 value=state.tag.name
                 onChange=evt2str(newName => setState(st => {tag:{...st.tag, name:newName}}))
                 autoFocus=true
+                onKeyDown=kbrdHnd2(
+                    kbrdClbkMake(~key=keyEnter, ~act=()=>onSave(state.tag)),
+                    kbrdClbkMake(~key=keyEsc, ~act=onCancel),
+                )
             />
             <Row>
                 <Button onClick=clickHnd(~act=()=>onSave(state.tag)) color="primary" variant=#contained>

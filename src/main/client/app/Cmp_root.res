@@ -64,6 +64,16 @@ let make = () => {
         setState(_ => {allTags:Some(res.tags)})
     }
 
+    let actUpdateTag = async (tag:Dtos.tagDto):unit => {
+        let res:Dtos.UpdateTag.res = await updateTag(tag)->getExn
+        setState(_ => {allTags:Some(res.tags)})
+    }
+
+    let actDeleteTag = async (tag:Dtos.tagDto):unit => {
+        let res:Dtos.DeleteTags.res = await deleteTags({ids:[tag.id]})->getExn
+        setState(_ => {allTags:Some(res.tags)})
+    }
+
     let rndTabContent = (tab:UseTabs.tab<'a>, allTags:array<Dtos.tagDto>) => {
         <div key=tab.id style=ReactDOM.Style.make(~display=if (tab.id == activeTabId) {"block"} else {"none"}, ())>
             {
@@ -73,6 +83,8 @@ let make = () => {
                             modalRef 
                             allTags 
                             createTag = {tag => actCreateTag(tag)->ignore}
+                            updateTag = {tag => actUpdateTag(tag)->ignore}
+                            deleteTag = {tag => actDeleteTag(tag)->ignore}
                         />
                     }
                     | Search => "Search will be here."->React.string

@@ -69,6 +69,14 @@ let rndYesNoDialog = (
             }
             <Row>
                 {
+                    rndHiddenTextField(
+                        ~onKeyDown=kbrdHnd2(
+                            kbrdClbkMake(~key=keyEnter, ~act=()=>onYes->Option.forEach(onYes => onYes())),
+                            kbrdClbkMake(~key=keyEsc, ~act=()=>onNo->Option.forEach(onNo => onNo())),
+                        ),
+                    )
+                }
+                {
                     textYes->Option.flatMap(textYes => onYes->Option.map(onYes => {
                         <Button onClick={_=>onYes()} variant=#outlined >
                             {React.string(textYes)}
@@ -81,14 +89,6 @@ let rndYesNoDialog = (
                             {React.string(textNo)}
                         </Button>
                     }))->Option.getOr(React.null)
-                }
-                {
-                    rndHiddenTextField(
-                        ~onKeyDown=kbrdHnd2(
-                            kbrdClbkMake(~key=keyEnter, ~act=()=>onYes->Option.forEach(onYes => onYes())),
-                            kbrdClbkMake(~key=keyEsc, ~act=()=>onNo->Option.forEach(onNo => onNo())),
-                        ),
-                    )
                 }
             </Row>
         </Col>
