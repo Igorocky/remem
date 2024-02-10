@@ -2,6 +2,8 @@ open React_utils
 open Mui_components
 open Modal
 
+let nbsp = Js_string2.fromCharCode(160)
+
 let rndHiddenTextField = (~key:option<string>=?, ~onKeyDown:ReactEvent.Keyboard.t=>unit):React.element => {
     <TextField 
         key=?key

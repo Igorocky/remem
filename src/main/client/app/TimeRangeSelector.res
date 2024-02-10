@@ -4,6 +4,7 @@ open BE_utils
 open React_rnd_utils
 open Modal
 open Common_utils
+open React_rnd_utils
 
 type timeRange = Dtos.timeRange
 
@@ -49,26 +50,6 @@ let strToTimeRange = str => {
     }
 }
 
-let rangeTypeOptions = [
-    ("Last1Hour","Last 1 hour"),
-    ("Last2Hours","Last 2 hours"),
-    ("Last4Hours","Last 4 hours"),
-    ("Last8Hours","Last 8 hours"),
-    ("Last24Hours","Last 24 hours"),
-    ("Today","Today"),
-    ("Yesterday","Yesterday"),
-    ("Last2Days","Last 2 days"),
-    ("Last3Days","Last 3 days"),
-    ("Last7Days","Last 7 days"),
-    ("ThisWeek","This week"),
-    ("ThisMonth","This month"),
-    ("Range","Datetime range"),
-]
-
-let yearOptions = Belt_Array.range(2024-1,Date.now()->Date.fromTime->Date.getFullYear + 1)->Array.map(year => {
-    (year->Int.toString, year->Int.toString)
-})
-
 let monthToStr = i => {
     switch i {
         | 1 => "Feb"
@@ -103,8 +84,36 @@ let strToMonth = i => {
     }
 }
 
+let rangeTypeOptions = [
+    ("Last1Hour","Last 1 hour"),
+    ("Last2Hours","Last 2 hours"),
+    ("Last4Hours","Last 4 hours"),
+    ("Last8Hours","Last 8 hours"),
+    ("Last24Hours","Last 24 hours"),
+    ("Today","Today"),
+    ("Yesterday","Yesterday"),
+    ("Last2Days","Last 2 days"),
+    ("Last3Days","Last 3 days"),
+    ("Last7Days","Last 7 days"),
+    ("ThisWeek","This week"),
+    ("ThisMonth","This month"),
+    ("Range","Datetime range"),
+]
+
+let yearOptions = Belt_Array.range(2024-1,Date.now()->Date.fromTime->Date.getFullYear + 1)->Array.map(year => {
+    (year->Int.toString, year->Int.toString)
+})
+
 let monthOptions = Belt_Array.range(0,11)->Array.map(i => {
     (i->monthToStr, i->monthToStr)
+})
+
+let hourOptions = Belt_Array.range(0,23)->Array.map(i => {
+    (i->Int.toString, i->Int.toString)
+})
+
+let minuteOptions = Belt_Array.range(0,59)->Array.map(i => {
+    (i->Int.toString, i->Int.toString)
 })
 
 let makeInitialState = (~initRange:option<timeRange>) => {
@@ -169,10 +178,24 @@ let make = (
     }
 
     let getDefaultTimeRangeBoundary = ():Date.msSinceEpoch => {
-        Date.now()
+        let date = Date.make()
+        let year = date->Date.getFullYear
+        let month = date->Date.getMonth
+        let day = date->Date.getDate
+        Date.makeWithYMD(~year,~month,~date=day)->Date.getTime
     }
 
     let strToIntExn = str => str->Int.fromString->Option.getExn
+
+    let getDaysInMonth = (year,month) => {
+        Date.makeWithYMD(~year,~month=month+1,~date=0)->Date.getDate
+    }
+
+    let getDayOptions = (year,month) => {
+        Belt_Array.range(1,getDaysInMonth(year,month))->Array.map(i => {
+            (i->Int.toString, i->Int.toString)
+        })
+    }
 
     let rndBoundarySelector = (
         ~label:string, ~value:option<Date.msSinceEpoch>, ~onChange:option<Date.msSinceEpoch>=>unit
@@ -203,26 +226,59 @@ let make = (
                         let day = date->Date.getDate
                         let hours = date->Date.getHours
                         let minutes = date->Date.getMinutes
-                        <Row>
+                        <Row alignItems={#center}>
                             {rndSelect(
                                 ~id="year", 
                                 ~name="Year", 
-                                ~width=200, 
+                                ~width=90, 
                                 ~onChange = n=>onChange(Some(Date.makeWithYMDHM(
                                     ~year=n->strToIntExn,~month,~date=day,~hours,~minutes
                                 )->Date.getTime)), 
                                 ~options = yearOptions,
                                 ~value=year->Int.toString
                             )}
+                            {"-"->React.string}
                             {rndSelect(
                                 ~id="Month", 
                                 ~name="Month", 
-                                ~width=200, 
+                                ~width=80, 
                                 ~onChange = n=>onChange(Some(Date.makeWithYMDHM(
                                     ~year,~month=n->strToMonth,~date=day,~hours,~minutes
                                 )->Date.getTime)), 
                                 ~options = monthOptions,
                                 ~value=month->monthToStr
+                            )}
+                            {"-"->React.string}
+                            {rndSelect(
+                                ~id="Day", 
+                                ~name="Day", 
+                                ~width=70, 
+                                ~onChange = n=>onChange(Some(Date.makeWithYMDHM(
+                                    ~year,~month,~date=n->strToIntExn,~hours,~minutes
+                                )->Date.getTime)), 
+                                ~options = getDayOptions(year,month),
+                                ~value=day->Int.toString
+                            )}
+                            {rndSelect(
+                                ~id="Hour", 
+                                ~name="Hour", 
+                                ~width=70, 
+                                ~onChange = n=>onChange(Some(Date.makeWithYMDHM(
+                                    ~year,~month,~date=day,~hours=n->strToIntExn,~minutes
+                                )->Date.getTime)), 
+                                ~options = hourOptions,
+                                ~value=hours->Int.toString
+                            )}
+                            {":"->React.string}
+                            {rndSelect(
+                                ~id="Minute", 
+                                ~name="Minute", 
+                                ~width=70, 
+                                ~onChange = n=>onChange(Some(Date.makeWithYMDHM(
+                                    ~year,~month,~date=day,~hours,~minutes=n->strToIntExn
+                                )->Date.getTime)), 
+                                ~options = minuteOptions,
+                                ~value=minutes->Int.toString
                             )}
                         </Row>
                     }
@@ -237,7 +293,7 @@ let make = (
                 <Col>
                     {
                         rndBoundarySelector(
-                            ~label="After",
+                            ~label="After" ++ nbsp ++ nbsp ++ nbsp,
                             ~value=after,
                             ~onChange=newAfter=>setState(setAfter(_,newAfter))
                         )

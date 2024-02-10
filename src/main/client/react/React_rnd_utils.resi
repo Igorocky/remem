@@ -1,5 +1,7 @@
 open Modal
 
+let nbsp:string
+
 let rndHiddenTextField: (~key: string=?, ~onKeyDown: ReactEvent.Keyboard.t => unit) => React.element
 
 let openYesNoDialog: (
