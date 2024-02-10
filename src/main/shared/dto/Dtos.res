@@ -9,21 +9,6 @@ let parseTagDto:jsonAny=>tagDto = toObj(_, o => {
     name: o->str("name"),
 })
 
-type timeRange =
-    | Last1Hour
-    | Last2Hours
-    | Last4Hours
-    | Last8Hours
-    | Last24Hours
-    | Today
-    | Yesterday
-    | Last2Days
-    | Last3Days
-    | Last7Days
-    | ThisWeek
-    | ThisMonth
-    | Range(option<Date.msSinceEpoch>,option<Date.msSinceEpoch>)
-
 module GetAllTags = {
     let name = "getAllTags"
 

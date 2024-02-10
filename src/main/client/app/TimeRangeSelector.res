@@ -6,14 +6,11 @@ open Modal
 open Common_utils
 open React_rnd_utils
 
-type timeRange = Dtos.timeRange
-
 type state = {
     range: timeRange,
 }
 
 let timeRangeToStr = range => {
-    open Dtos
     switch range {
         | Last1Hour => "Last1Hour"
         | Last2Hours => "Last2Hours"
@@ -25,14 +22,11 @@ let timeRangeToStr = range => {
         | Last2Days => "Last2Days"
         | Last3Days => "Last3Days"
         | Last7Days => "Last7Days"
-        | ThisWeek => "ThisWeek"
-        | ThisMonth => "ThisMonth"
         | Range(_,_) => "Range"
     }
 }
 
 let strToTimeRange = str => {
-    open Dtos
     switch str {
         | "Last1Hour" => Last1Hour
         | "Last2Hours" => Last2Hours
@@ -44,8 +38,6 @@ let strToTimeRange = str => {
         | "Last2Days" => Last2Days
         | "Last3Days" => Last3Days
         | "Last7Days" => Last7Days
-        | "ThisWeek" => ThisWeek
-        | "ThisMonth" => ThisMonth
         | _ => Range(None,None)
     }
 }
@@ -85,6 +77,7 @@ let strToMonth = i => {
 }
 
 let rangeTypeOptions = [
+    ("Range","Datetime range"),
     ("Last1Hour","Last 1 hour"),
     ("Last2Hours","Last 2 hours"),
     ("Last4Hours","Last 4 hours"),
@@ -95,9 +88,6 @@ let rangeTypeOptions = [
     ("Last2Days","Last 2 days"),
     ("Last3Days","Last 3 days"),
     ("Last7Days","Last 7 days"),
-    ("ThisWeek","This week"),
-    ("ThisMonth","This month"),
-    ("Range","Datetime range"),
 ]
 
 let yearOptions = Belt_Array.range(2024-1,Date.now()->Date.fromTime->Date.getFullYear + 1)->Array.map(year => {
@@ -146,9 +136,10 @@ let make = (
 
     let rndSelect = (
         ~id:string, ~name:string, ~width:int, ~onChange:string=>unit, 
-        ~options:array<(string,string)>, ~value:string
+        ~options:array<(string,string)>, ~value:string,
+        ~disabled:bool=false,
     ) => {
-        <FormControl size=#small>
+        <FormControl size=#small disabled>
             <InputLabel id>name</InputLabel>
             <Select
                 sx={"width": width}
@@ -171,7 +162,18 @@ let make = (
             ~id="rangeType", 
             ~name=label, 
             ~width=200, 
-            ~onChange = newRangeType=>setState(st => {range:strToTimeRange(newRangeType)}), 
+            ~onChange = newRangeType=>{
+                setState(st => {
+                    let newRange = switch strToTimeRange(newRangeType) {
+                        | Range(_,_) => {
+                            let (prevLeft,prevRight) = parseTimeRange(st.range, Date.now())
+                            Range(prevLeft,prevRight)
+                        }
+                        | newRange => newRange
+                    }
+                    {range:newRange}
+                })
+            }, 
             ~options = rangeTypeOptions,
             ~value=state.range->timeRangeToStr
         )
@@ -198,24 +200,28 @@ let make = (
     }
 
     let rndBoundarySelector = (
-        ~label:string, ~value:option<Date.msSinceEpoch>, ~onChange:option<Date.msSinceEpoch>=>unit
+        ~label:string, ~value:option<Date.msSinceEpoch>, ~onChange:option<Date.msSinceEpoch>=>unit,
+        ~disabled:bool=false
     ) => {
         <Row>
-            <FormControlLabel
-                control={
-                    <Checkbox
-                        checked={value->Option.isSome}
-                        onChange={evt2bool(checked => {
-                            if checked {
-                                onChange(Some(getDefaultTimeRangeBoundary()))
-                            } else {
-                                onChange(None)
-                            }
-                        })}
-                    />
-                }
-                label
-            />
+            {
+                <FormControlLabel
+                    disabled
+                    control={
+                        <Checkbox
+                            checked={value->Option.isSome}
+                            onChange={evt2bool(checked => {
+                                if checked {
+                                    onChange(Some(getDefaultTimeRangeBoundary()))
+                                } else {
+                                    onChange(None)
+                                }
+                            })}
+                        />
+                    }
+                    label
+                />
+            }
             {
                 switch value {
                     | None => React.null
@@ -228,6 +234,7 @@ let make = (
                         let minutes = date->Date.getMinutes
                         <Row alignItems={#center}>
                             {rndSelect(
+                                ~disabled,
                                 ~id="year", 
                                 ~name="Year", 
                                 ~width=90, 
@@ -239,6 +246,7 @@ let make = (
                             )}
                             {"-"->React.string}
                             {rndSelect(
+                                ~disabled,
                                 ~id="Month", 
                                 ~name="Month", 
                                 ~width=80, 
@@ -250,6 +258,7 @@ let make = (
                             )}
                             {"-"->React.string}
                             {rndSelect(
+                                ~disabled,
                                 ~id="Day", 
                                 ~name="Day", 
                                 ~width=70, 
@@ -260,6 +269,7 @@ let make = (
                                 ~value=day->Int.toString
                             )}
                             {rndSelect(
+                                ~disabled,
                                 ~id="Hour", 
                                 ~name="Hour", 
                                 ~width=70, 
@@ -271,6 +281,7 @@ let make = (
                             )}
                             {":"->React.string}
                             {rndSelect(
+                                ~disabled,
                                 ~id="Minute", 
                                 ~name="Minute", 
                                 ~width=70, 
@@ -307,7 +318,27 @@ let make = (
                     }
                 </Col>
             }
-            | _ => React.null
+            | range => {
+                let (after,before) = parseTimeRange(range, Date.now())
+                <Col>
+                    {
+                        rndBoundarySelector(
+                            ~label="After" ++ nbsp ++ nbsp ++ nbsp,
+                            ~value=after,
+                            ~onChange=_=>(),
+                            ~disabled=true,
+                        )
+                    }
+                    {
+                        rndBoundarySelector(
+                            ~label="Before",
+                            ~value=before,
+                            ~onChange=_=>(),
+                            ~disabled=true,
+                        )
+                    }
+                </Col>
+            }
         }
     }
 
