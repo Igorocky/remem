@@ -6,5 +6,5 @@ external make: (
     ~disabled: bool=?,
     ~indeterminate: bool=?,
     ~checked: bool=?,
-    ~onChange: ReactEvent.Form.t=?,
+    ~onChange: ReactEvent.Form.t=>unit=?,
 ) => React.element = "default"

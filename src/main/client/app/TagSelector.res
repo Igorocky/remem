@@ -5,15 +5,17 @@ open React_rnd_utils
 open Modal
 open Common_utils
 
+type tagDto = Dtos.tagDto
+
 type state = {
-    selectedTags: array<Dtos.tagDto>,
+    selectedTags: array<tagDto>,
     filterText:string,
-    filteredTags: array<Dtos.tagDto>,
-    remainingTags: array<Dtos.tagDto>,
+    filteredTags: array<tagDto>,
+    remainingTags: array<tagDto>,
     reqCnt:int,
 }
 
-let makeInitialState = (~allTags:array<Dtos.tagDto>,) => {
+let makeInitialState = (~allTags:array<tagDto>,) => {
     {
         selectedTags: [],
         filterText: "",
@@ -23,19 +25,19 @@ let makeInitialState = (~allTags:array<Dtos.tagDto>,) => {
     }
 }
 
-let selectTag = (st:state, tag:Dtos.tagDto, remaininTags:array<Dtos.tagDto>):state => {
+let selectTag = (st:state, tag:tagDto, remaininTags:array<tagDto>):state => {
     {
         ...st,
         selectedTags: 
             Array.concat(st.selectedTags, [tag])
-            ->Array.toSorted(comparatorByStr((tag:Dtos.tagDto) => tag.name)),
+            ->Array.toSorted(comparatorByStr((tag:tagDto) => tag.name)),
         filterText:"",
         filteredTags: remaininTags,
         remainingTags: remaininTags,
     }
 }
 
-let unselectTag = (st:state, tag:Dtos.tagDto, remaininTags:array<Dtos.tagDto>):state => {
+let unselectTag = (st:state, tag:tagDto, remaininTags:array<tagDto>):state => {
     {
         ...st,
         selectedTags: st.selectedTags->Array.filter(t => t.id != tag.id),
@@ -54,7 +56,7 @@ let setFilterText = (st:state,text:string):state => {
     }
 }
 
-let setRemainingTags = (st:state, remaininTags:array<Dtos.tagDto>):state => {
+let setRemainingTags = (st:state, remaininTags:array<tagDto>):state => {
     {
         ...st,
         remainingTags: remaininTags,
@@ -64,9 +66,9 @@ let setRemainingTags = (st:state, remaininTags:array<Dtos.tagDto>):state => {
 @react.component
 let make = (
     ~modalRef:modalRef,
-    ~allTags:array<Dtos.tagDto>,
-    ~createTag:Dtos.tagDto=>promise<result<Dtos.tagDto,string>>,
-    ~getRemainingTags:array<Dtos.tagDto>=>promise<result<array<Dtos.tagDto>,string>>,
+    ~allTags:array<tagDto>,
+    ~createTag:tagDto=>promise<result<tagDto,string>>,
+    ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
 ) => {
     let (state, setState) = React.useState(() => makeInitialState(~allTags))
 
@@ -88,7 +90,7 @@ let make = (
         setState(selectTag(_,tag,remainingTags))
     }
 
-    let actUnselectTag = async (tag:Dtos.tagDto) => {
+    let actUnselectTag = async (tag:tagDto) => {
         let selectedTags = state.selectedTags->Array.filter(t => t.id != tag.id)
         let remainingTags = await getRemainingTags(selectedTags)->getExn
         setState(unselectTag(_, tag, remainingTags))
