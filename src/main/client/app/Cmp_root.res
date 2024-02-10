@@ -87,7 +87,12 @@ let make = () => {
                             deleteTag = {tag => actDeleteTag(tag)->ignore}
                         />
                     }
-                    | Search => "Search will be here."->React.string
+                    | Search => {
+                        <Cmp_search 
+                            modalRef 
+                            allTags 
+                        />
+                    }
                 }
             }
         </div>
