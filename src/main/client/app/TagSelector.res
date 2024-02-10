@@ -23,28 +23,25 @@ let makeInitialState = (~allTags:array<Dtos.tagDto>,) => {
     }
 }
 
-let selectTag = (st:state,tag:Dtos.tagDto):state => {
-    let newSelectedTags = Array.concat(st.selectedTags, [tag])
-    newSelectedTags->Array.sort(comparatorByStr((tag:Dtos.tagDto) => tag.name))
-    let newRemainingTags = st.remainingTags->Array.filter(t => t.id != tag.id)
+let selectTag = (st:state, tag:Dtos.tagDto, remaininTags:array<Dtos.tagDto>):state => {
     {
         ...st,
-        selectedTags: newSelectedTags,
+        selectedTags: 
+            Array.concat(st.selectedTags, [tag])
+            ->Array.toSorted(comparatorByStr((tag:Dtos.tagDto) => tag.name)),
         filterText:"",
-        filteredTags: newRemainingTags,
-        remainingTags: newRemainingTags,
+        filteredTags: remaininTags,
+        remainingTags: remaininTags,
     }
 }
 
-let unselectTag = (st:state,tag):state => {
-    let newRemainingTags = Array.concat(st.remainingTags, [tag])
-    newRemainingTags->Array.sort(comparatorByStr((tag:Dtos.tagDto) => tag.name))
+let unselectTag = (st:state, tag:Dtos.tagDto, remaininTags:array<Dtos.tagDto>):state => {
     {
         ...st,
         selectedTags: st.selectedTags->Array.filter(t => t.id != tag.id),
         filterText:"",
-        filteredTags: newRemainingTags,
-        remainingTags: newRemainingTags,
+        filteredTags: remaininTags,
+        remainingTags: remaininTags,
     }
 }
 
@@ -57,10 +54,10 @@ let setFilterText = (st:state,text:string):state => {
     }
 }
 
-let setRemainingTags = (st:state,tags):state => {
+let setRemainingTags = (st:state, remaininTags:array<Dtos.tagDto>):state => {
     {
         ...st,
-        remainingTags:tags,
+        remainingTags: remaininTags,
     }->setFilterText(st.filterText)
 }
 
@@ -68,14 +65,52 @@ let setRemainingTags = (st:state,tags):state => {
 let make = (
     ~modalRef:modalRef,
     ~allTags:array<Dtos.tagDto>,
-    // ~createTag:Dtos.tagDto=>unit,
-    // ~getRemainingTags:array<Dtos.tagDto>=>promise<array<Dtos.tagDto>>,
+    ~createTag:Dtos.tagDto=>promise<result<Dtos.tagDto,string>>,
+    ~getRemainingTags:array<Dtos.tagDto>=>promise<result<array<Dtos.tagDto>,string>>,
 ) => {
     let (state, setState) = React.useState(() => makeInitialState(~allTags))
 
-    // let actUnselectTag = () => {
+    let getExn = getExn(_, modalRef)
 
-    // }
+    let actUpdateRemainingTags = async () => {
+        let remainingTags = await getRemainingTags(state.selectedTags)->getExn
+        setState(setRemainingTags(_,remainingTags))
+    }
+
+    React.useEffect1(() => {
+        actUpdateRemainingTags()->ignore
+        None
+    }, [allTags])
+
+    let actSelectTag = async tag => {
+        let selectedTags = state.selectedTags->Array.concat([tag])
+        let remainingTags = await getRemainingTags(selectedTags)->getExn
+        setState(selectTag(_,tag,remainingTags))
+    }
+
+    let actUnselectTag = async (tag:Dtos.tagDto) => {
+        let selectedTags = state.selectedTags->Array.filter(t => t.id != tag.id)
+        let remainingTags = await getRemainingTags(selectedTags)->getExn
+        setState(unselectTag(_, tag, remainingTags))
+    }
+
+    let actCreateNewTagOrSelectSingleFilteredTag = async () => {
+        if (state.filteredTags->Array.length == 1) {
+            actSelectTag(state.filteredTags->Array.getUnsafe(0))->ignore
+        } else {
+            let newTagName = state.filterText->String.trim
+            let newTagConfirmed = await openYesNoDialog(
+                ~modalRef,
+                ~text=`Create a new tag '${newTagName}'?`,
+                ~textYes="Create",
+                ~textNo="Cancel",
+            )
+            if (newTagConfirmed) {
+                let newTag = await createTag({id:"", name:newTagName})->getExn
+                actSelectTag(newTag)->ignore
+            }
+        }
+    }
 
     let rndSelectedTags = () => {
         <Row>
@@ -83,14 +118,43 @@ let make = (
                 state.selectedTags->Array.map(tag => {
                     <span key=tag.id>
                         <span>{tag.name->React.string}</span>
-                        <span onClick=clickHnd(~act=()=>())>{"X"->React.string}</span>
+                        <span onClick=clickHnd(~act=()=>actUnselectTag(tag)->ignore)>{"[X]"->React.string}</span>
                     </span>
                 })->React.array
             }
         </Row>
     }
 
-    <Col>
-        {rndSelectedTags()}
-    </Col>
+    let rndFilter = () => {
+        <TextField
+            size=#small
+            style=ReactDOM.Style.make(~width="300px", ())
+            label="Tag" 
+            value=state.filterText
+            onChange=evt2str(newText => setState(setFilterText(_,newText)))
+            // autoFocus=true
+            onKeyDown=kbrdHnd2(
+                kbrdClbkMake(~key=keyEnter, ~act=()=>actCreateNewTagOrSelectSingleFilteredTag()->ignore),
+                kbrdClbkMake(~key=keyEsc, ~act=()=>setState(setFilterText(_,""))),
+            )
+        />
+    }
+
+    let rndFilteredTags = () => {
+        <Row>
+            {
+                state.filteredTags->Array.map(tag => {
+                    <span key=tag.id onClick=clickHnd(~act=()=>actSelectTag(tag)->ignore)>{tag.name->React.string}</span>
+                })->React.array
+            }
+        </Row>
+    }
+
+    <Paper style=ReactDOM.Style.make(~padding="5px", ())>
+        <Col>
+            {rndSelectedTags()}
+            {rndFilter()}
+            {rndFilteredTags()}
+        </Col>
+    </Paper>
 }

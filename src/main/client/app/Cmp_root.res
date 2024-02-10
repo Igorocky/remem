@@ -48,8 +48,8 @@ let make = () => {
     React.useEffect0(()=>{
         updateTabs(st => {
             if (st->UseTabs.getTabs->Array.length == 0) {
-                let (st, _) = st->UseTabs.addTab(~label="Tags", ~closable=false, ~data=Tags, ~doOpen=true)
-                let (st, _) = st->UseTabs.addTab(~label="Search", ~closable=false, ~data=Search)
+                let (st, _) = st->UseTabs.addTab(~label="Tags", ~closable=false, ~data=Tags)
+                let (st, _) = st->UseTabs.addTab(~label="Search", ~closable=false, ~data=Search, ~doOpen=true)
                 st
             } else {
                 st
@@ -59,9 +59,13 @@ let make = () => {
         None
     })
 
-    let actCreateTag = async (tag:Dtos.tagDto):unit => {
+    let actCreateTag = async (tag:Dtos.tagDto):result<Dtos.tagDto,string> => {
         let res:Dtos.CreateTag.res = await createTag({name:tag.name})->getExn
         setState(_ => {allTags:Some(res.tags)})
+        switch res.tags->Array.find(t => t.name == tag.name) {
+            | None => Error("Internal error: cannot identify the newly created tag.")
+            | Some(tag) => Ok(tag)
+        }
     }
 
     let actUpdateTag = async (tag:Dtos.tagDto):unit => {
@@ -91,6 +95,7 @@ let make = () => {
                         <Cmp_search 
                             modalRef 
                             allTags 
+                            createTag=actCreateTag
                         />
                     }
                 }
