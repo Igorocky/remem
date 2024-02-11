@@ -134,6 +134,11 @@ let make = (
 ) => {
     let (state, setState) = React.useState(() => makeInitialState(~initRange))
 
+    React.useEffect1(() => {
+        onChange(state.range)
+        None
+    }, [state.range])
+
     let rndSelect = (
         ~id:string, ~name:string, ~width:int, ~onChange:string=>unit, 
         ~options:array<(string,string)>, ~value:string,

@@ -7,6 +7,7 @@ let makeDatabase: (string,~options:'a=?) => database
 let dbPrepare: (database,string) => statement
 let dbPragma: (database, string) => 'a
 let dbPragmaFull: (database,string) => array<{..}>
+let dbExec: (database,string) => database
 
 let stmtRun: (statement,'a) => statementCompletionInfo
 let stmtRunNp: statement => statementCompletionInfo

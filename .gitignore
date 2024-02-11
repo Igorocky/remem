@@ -31,3 +31,4 @@ dist-ssr
 /remem.iml
 /src/main/server/remem.sqlite
 /remem.sqlite
+/src/main/server/remem-debug.sqlite
