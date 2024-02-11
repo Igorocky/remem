@@ -6,7 +6,7 @@ let initDatabase = (db:database) => {
     switch db->dbPragma("user_version") {
         | 0 => {
             db->dbPragma("foreign_keys = ON")->ignore
-            // Console.log2("S.schemaScript", schemaScript)
+            //Console.log2("S.schemaScript", S.schemaScript)
             db->dbExec(S.schemaScript)->ignore
             db->dbPragma(`user_version = ${S.version->Int.toString}`)
         }
