@@ -1,0 +1,46 @@
+let version: int
+let schemaScript: string
+
+let cardType: string
+let cardType_id: string
+let cardType_name: string
+
+let cardType_Translate: string
+
+let taskType: string
+let taskType_id: string
+let taskType_name: string
+let taskType_cardType: string
+
+let tag: string
+let tag_id: string
+let tag_name: string
+let tag_crt_time: string
+
+let card: string
+let card_id: string
+let card_type: string
+let card_deleted: string
+let card_crt_time: string
+
+let cardToTag: string
+let cardToTag_cardId: string
+let cardToTag_tagId: string
+
+let cardTr: string
+let cardTr_id: string
+let cardTr_native: string
+let cardTr_foreign: string
+let cardTr_tran: string
+
+let taskSch: string
+let taskSch_id: string
+let taskSch_card: string
+let taskSch_type: string
+let taskSch_paused: string
+let taskSch_updAt: string
+let taskSch_delay: string
+let taskSch_rnd: string
+let taskSch_nextAccInMs: string
+let taskSch_nextAccAt: string
+
