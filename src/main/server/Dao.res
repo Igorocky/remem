@@ -20,7 +20,7 @@ let initDatabase = (db:database) => {
     }
 }
 
-let getAllTagsQuery = `select ${S.tag_id}||'' id, ${S.tag_name} name from ${S.tag_tbl} order by ${S.tag_name}`
+let getAllTagsQuery = `select ${S.tag_id}||'' id, ${S.tag_name} name from ${S.tag} order by ${S.tag_name}`
 let getAllTags = (db:database):promise<Dtos.GetAllTags.res> => {
     Promise.resolve(
         {
@@ -30,13 +30,13 @@ let getAllTags = (db:database):promise<Dtos.GetAllTags.res> => {
     )
 }
 
-let insertTagQuery = `insert into ${S.tag_tbl}(${S.tag_name}) values (:name)`
+let insertTagQuery = `insert into ${S.tag}(${S.tag_name}) values (:name)`
 let createTag = (db:database, req:Dtos.CreateTag.req):promise<Dtos.CreateTag.res> => {
     db->dbPrepare(insertTagQuery)->stmtRun(req)->ignore
     getAllTags(db)
 }
 
-let updateTagQuery = `update ${S.tag_tbl} set ${S.tag_name} = :name where ${S.tag_id} = :id`
+let updateTagQuery = `update ${S.tag} set ${S.tag_name} = :name where ${S.tag_id} = :id`
 let updateTag = (db:database, req:Dtos.UpdateTag.req):promise<Dtos.UpdateTag.res> => {
     db->dbPrepare(updateTagQuery)->stmtRun(req)->ignore
     getAllTags(db)
@@ -44,7 +44,7 @@ let updateTag = (db:database, req:Dtos.UpdateTag.req):promise<Dtos.UpdateTag.res
 
 let deleteTags = (db:database, req:Dtos.DeleteTags.req):promise<Dtos.DeleteTags.res> => {
     db->dbPrepare(
-        `delete from ${S.tag_tbl} where ${S.tag_id} in (`
+        `delete from ${S.tag} where ${S.tag_id} in (`
             ++ Array.make(~length=req.ids->Array.length, "?")->Array.joinWith(",")
             ++ `)`
     )->stmtRun(req.ids)->ignore
