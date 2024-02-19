@@ -69,6 +69,7 @@ let make = (
     ~allTags:array<tagDto>,
     ~createTag:tagDto=>promise<result<tagDto,string>>,
     ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
+    ~onChange: array<Dtos.tagDto> => unit,
 ) => {
     let (state, setState) = React.useState(() => makeInitialState(~allTags))
 
@@ -83,6 +84,11 @@ let make = (
         actUpdateRemainingTags()->ignore
         None
     }, [allTags])
+
+    React.useEffect1(() => {
+        onChange(state.selectedTags)
+        None
+    }, [state.selectedTags])
 
     let actSelectTag = async tag => {
         let selectedTags = state.selectedTags->Array.concat([tag])

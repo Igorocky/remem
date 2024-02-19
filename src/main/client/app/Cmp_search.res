@@ -22,6 +22,7 @@ let make = (
                     allTags->Array.filter(tag => !(selectedIds->Belt.HashSet.String.has(tag.id)))->Ok
                 )
             }}
+            onChange = {_ => ()}
         />
         <TimeRangeSelector
             label="Created when"

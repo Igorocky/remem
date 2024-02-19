@@ -20,6 +20,7 @@ let mainTheme = ThemeProvider.createTheme(
 type tabData =
     | Tags
     | Search
+    | MakeCard
 
 type state = {
     allTags:option<array<Dtos.tagDto>>
@@ -36,6 +37,13 @@ let createTag = createBeFunc(module(Dtos.CreateTag))
 let updateTag = createBeFunc(module(Dtos.UpdateTag))
 let deleteTags = createBeFunc(module(Dtos.DeleteTags))
 
+let getRemainingTagsSimple = (allTags:array<Dtos.tagDto>, selectedTags:array<Dtos.tagDto>) => {
+    let selectedIds = selectedTags->Array.map(tag => tag.id)->Belt.HashSet.String.fromArray
+    Promise.resolve(
+        allTags->Array.filter(tag => !(selectedIds->Belt.HashSet.String.has(tag.id)))->Ok
+    )
+}
+
 @react.component
 let make = () => {
     let modalRef = useModalRef()
@@ -49,7 +57,8 @@ let make = () => {
         updateTabs(st => {
             if (st->UseTabs.getTabs->Array.length == 0) {
                 let (st, _) = st->UseTabs.addTab(~label="Tags", ~closable=false, ~data=Tags)
-                let (st, _) = st->UseTabs.addTab(~label="Search", ~closable=false, ~data=Search, ~doOpen=true)
+                let (st, _) = st->UseTabs.addTab(~label="Search", ~closable=false, ~data=Search)
+                let (st, _) = st->UseTabs.addTab(~label="Add card", ~closable=false, ~data=MakeCard, ~doOpen=true)
                 st
             } else {
                 st
@@ -96,6 +105,14 @@ let make = () => {
                             modalRef 
                             allTags 
                             createTag=actCreateTag
+                        />
+                    }
+                    | MakeCard => {
+                        <Cmp_make_card 
+                            modalRef 
+                            allTags 
+                            createTag=actCreateTag
+                            getRemainingTags=getRemainingTagsSimple(allTags,_)
                         />
                     }
                 }

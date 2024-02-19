@@ -68,3 +68,26 @@ module DeleteTags = {
 
     let parseRes = GetAllTags.parseRes
 }
+
+
+module CreateTranslateCard = {
+    let name = "createTranslateCard"
+
+    type req = {
+        native:string,
+        foreign:string,
+        tran:string,
+        tagIds:array<string>,
+    }
+
+    let parseReq = toObj(_, o => { 
+        native: o->str("native"),
+        foreign: o->str("foreign"),
+        tran: o->str("tran"),
+        tagIds: o->arr("tagIds", toStr(_)),
+    })
+
+    type res = unit
+
+    let parseRes = _ => ()
+}
