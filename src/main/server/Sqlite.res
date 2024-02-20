@@ -15,3 +15,5 @@ type statementCompletionInfo = {
 @send external stmtRunNp: (statement) => statementCompletionInfo = "run"
 @send external stmtAll: (statement,'a) => array<JSON.t> = "all"
 @send external stmtAllNp: (statement) => array<JSON.t> = "all"
+@send external stmtGet: (statement,'a) => JSON.t = "get"
+@send external stmtGetNp: (statement) => JSON.t = "get"

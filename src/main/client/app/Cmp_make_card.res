@@ -81,6 +81,9 @@ let setTagIds = (st:state,tags:array<Dtos.tagDto>):state => {
     updateTranslateCardData(st, data => {...data, tagIds:tags->Array.map(tag => tag.id)})
 }
 
+let createTranslateCard:beFunc<Dtos.CreateTranslateCard.req, Dtos.CreateTranslateCard.res> = 
+    createBeFunc(module(Dtos.CreateTranslateCard))
+
 @react.component
 let make = (
     ~modalRef:modalRef,
@@ -89,6 +92,8 @@ let make = (
     ~getRemainingTags:array<Dtos.tagDto>=>promise<result<array<Dtos.tagDto>,string>>,
 ) => {
     let (state, setState) = React.useState(makeInitialState)
+
+    let getExn = getExn(_, modalRef)
 
     let rndSelect = (
         ~id:string, ~name:string, ~width:int, ~onChange:string=>unit, 
@@ -166,6 +171,28 @@ let make = (
         }
     }
 
+    let actSave = async () => {
+        switch state.cardData {
+            | Translate(data) => {
+                await createTranslateCard(data)->getExn
+                setState(st => {
+                    let st = st->setNative("")
+                    let st = st->setForeign("")
+                    let st = st->setTran("")
+                    st
+                })
+            }
+        }
+    }
+
+    let rndButtons = () => {
+        <Row>
+            <Button onClick=clickHnd(~act=() => actSave()->ignore) color="primary" variant=#contained>
+                {React.string("Save")}
+            </Button>
+        </Row>
+    }
+
     <Col style=ReactDOM.Style.make(~padding="10px", ())>
         {rndSelect(
             ~id="Card type", ~name="Card type", ~width=200, 
@@ -174,5 +201,6 @@ let make = (
             ~value=state.cardType->cardTypeToStr,
         )}
         {rndCardData()}
+        {rndButtons()}
     </Col>
 }

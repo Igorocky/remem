@@ -50,3 +50,17 @@ let deleteTags = (db:database, req:Dtos.DeleteTags.req):promise<Dtos.DeleteTags.
     )->stmtRun(req.ids)->ignore
     getAllTags(db)
 }
+
+let insertCardQuery = `insert into ${S.card}(${S.card_type}) values (:card_type)`
+let insertTranslateCardQuery = `insert into ${S.cardTr}
+(${S.cardTr_id}, ${S.cardTr_native}, ${S.cardTr_foreign}, ${S.cardTr_tran}) 
+values (:cardId, :native, :foreign, :tran)`
+let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):promise<Dtos.CreateTranslateCard.res> => {
+    Promise.resolve({
+        db->dbPrepare(insertCardQuery)->stmtRun({"card_type":S.cardType_Translate->Int.fromString})->ignore
+        let cardId = db->dbPrepare("SELECT last_insert_rowid()||'' id")->stmtGetNp
+            ->Json_parse.fromJsonExn(Json_parse.toObj(_, Json_parse.str(_, "id")))
+        db->dbPrepare(insertTranslateCardQuery)
+            ->stmtRun({"cardId":cardId,"native":req.native,"foreign":req.foreign,"tran":req.tran})->ignore
+    })
+}

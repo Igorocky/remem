@@ -4,6 +4,7 @@ type backend = {
 
 let makeBackend = ():backend => {
     let db = Sqlite.makeDatabase("./remem.sqlite")
+    Dao.initDatabase(db)
     let endpoints = Endpoints.makeEndpoints(db)
     {
         execBeFunc: endpoints.execBeFunc

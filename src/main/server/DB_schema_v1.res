@@ -60,7 +60,7 @@ saveScript(`
     create table ${card} (
         ${card_id} integer primary key,
         ${card_type} integer references ${cardType}(${cardType_id}) ON DELETE RESTRICT ON UPDATE CASCADE,
-        ${card_deleted} integer check (${card_deleted} in (0,1)),
+        ${card_deleted} integer check (${card_deleted} in (0,1)) default 0,
         ${card_crt_time} real not null default ( unixepoch() * 1000 )
     ) strict;
 `)

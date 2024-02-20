@@ -6,6 +6,7 @@ let parseBeResp = (respStr:string, dataMapper:jsonAny=>'a): result<'a,string> =>
     let parsed = parseJson(respStr, toObj(_, o => {
         (
             o->anyOpt("data"),
+            o->anyOpt("emptyResponse"),
             o->strOpt("err"),
         )
     }))
@@ -16,16 +17,21 @@ let parseBeResp = (respStr:string, dataMapper:jsonAny=>'a): result<'a,string> =>
                 `BE response is `, respStr)
             Error(msg)
         }
-        | Ok((dataOpt,errOpt)) => {
+        | Ok((dataOpt,emptOpt,errOpt)) => {
             switch errOpt {
                 | Some(msg) => Error(msg)
                 | None => {
                     switch dataOpt {
-                        | None => {
-                            Js_console.error2(`BE response doesn't contain neither 'data' nor 'err':`, respStr)
-                            Error(`BE response doesn't contain neither 'data' nor 'err'.`)
-                        }
                         | Some(data) => fromJsonAny(data, dataMapper)
+                        | None => {
+                            switch emptOpt {
+                                | None => {
+                                    Js_console.error2(`BE response doesn't contain neither 'data' nor 'err':`, respStr)
+                                    Error(`BE response doesn't contain neither 'data' nor 'err'.`)
+                                }
+                                | Some(_) => parseJson("null", dataMapper)
+                            }
+                        }
                     }
                 }
             }

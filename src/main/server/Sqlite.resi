@@ -13,3 +13,5 @@ let stmtRun: (statement,'a) => statementCompletionInfo
 let stmtRunNp: statement => statementCompletionInfo
 let stmtAll: (statement,'a) => array<JSON.t>
 let stmtAllNp: (statement) => array<JSON.t>
+let stmtGet: (statement,'a) => JSON.t
+let stmtGetNp: (statement) => JSON.t

@@ -7,9 +7,11 @@ type endpoints = {
     execBeFunc: (beFuncName,JSON.t) => promise<jsonStr>
 }
 
+let anyToResponseObject = %raw("x => x === undefined ? {emptyResponse:true} : {data:x}")
+
 let addBeFuncToMap = (
     endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<string>>, 
-    name:string, inpParser:jsonAny=>'a, method:'a => promise<'b>
+    name:string, inpParser:jsonAny=>'req, method:'req => promise<'res>
 ):unit => {
     endpointsMap->Belt.HashMap.String.set(name, json => {
         switch fromJson(json, inpParser) {
@@ -26,7 +28,11 @@ let addBeFuncToMap = (
                         Console.error(exn)
                         { "err": errMsg }->Common_utils.stringify->Promise.resolve
                     }
-                    | Ok(res) => res->Promise.thenResolve(res => {"data":res}->Common_utils.stringify)
+                    | Ok(res) => {
+                        res
+                            ->Promise.thenResolve(anyToResponseObject)
+                            ->Promise.thenResolve(Common_utils.stringify)
+                    }
                 }
             }
         }
@@ -62,6 +68,7 @@ let makeEndpoints = (db:Sqlite.database):endpoints => {
     registerBeFunc(endpointsMap, module(Dtos.CreateTag), Dao.createTag(db, _) )
     registerBeFunc(endpointsMap, module(Dtos.UpdateTag), Dao.updateTag(db, _) )
     registerBeFunc(endpointsMap, module(Dtos.DeleteTags), Dao.deleteTags(db, _) )
+    registerBeFunc(endpointsMap, module(Dtos.CreateTranslateCard), Dao.createTranslateCard(db, _) )
     {
         execBeFunc: execBeMethod(endpointsMap, ...)
     }
