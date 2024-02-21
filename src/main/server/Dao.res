@@ -3,9 +3,13 @@ open Sqlite
 module S = DB_schema_v1
 
 let initDatabase = (db:database) => {
+    db->dbPragma("foreign_keys = ON")->ignore
+    switch db->dbPragma("foreign_keys") {
+        | 1 => ()
+        | _ => Js.Exn.raiseError(`Unable to set foreign_keys = ON`)
+    }
     switch db->dbPragma("user_version") {
         | 0 => {
-            db->dbPragma("foreign_keys = ON")->ignore
             //Console.log2("S.schemaScript", S.schemaScript)
             db->dbExec(S.schemaScript)->ignore
             db->dbPragma(`user_version = ${S.version->Int.toString}`)
@@ -55,6 +59,8 @@ let insertCardQuery = `insert into ${S.card}(${S.card_type}) values (:card_type)
 let insertTranslateCardQuery = `insert into ${S.cardTr}
 (${S.cardTr_id}, ${S.cardTr_native}, ${S.cardTr_foreign}, ${S.cardTr_tran}) 
 values (:cardId, :native, :foreign, :tran)`
+let insertCardToTagQuery = `insert into ${S.cardToTag}
+(${S.cardToTag_cardId}, ${S.cardToTag_tagId}) values (:cardId, :tagId)`
 let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):promise<Dtos.CreateTranslateCard.res> => {
     Promise.resolve({
         db->dbPrepare(insertCardQuery)->stmtRun({"card_type":S.cardType_Translate->Int.fromString})->ignore
@@ -62,5 +68,8 @@ let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):promis
             ->Json_parse.fromJsonExn(Json_parse.toObj(_, Json_parse.str(_, "id")))
         db->dbPrepare(insertTranslateCardQuery)
             ->stmtRun({"cardId":cardId,"native":req.native,"foreign":req.foreign,"tran":req.tran})->ignore
+        req.tagIds->Array.forEach(tagId => {
+            db->dbPrepare(insertCardToTagQuery)->stmtRun({"cardId":cardId,"tagId":tagId})->ignore
+        })
     })
 }
