@@ -69,25 +69,62 @@ module DeleteTags = {
     let parseRes = GetAllTags.parseRes
 }
 
+type translateCardDto = {
+    native:string,
+    foreign:string,
+    tran:string,
+    tagIds:array<string>,
+}
+let parseTranslateCardDto:jsonAny=>translateCardDto = toObj(_, o => {
+    native: o->str("native"),
+    foreign: o->str("foreign"),
+    tran: o->str("tran"),
+    tagIds: o->arr("tagIds", toStr(_)),
+})
+
+@tag("cardType")
+type cardData =
+    | @as("Translate") Translate(translateCardDto)
+
+type cardDto = {
+    id:string,
+    isDeleted:bool,
+    crtTime:float,
+    data:cardData,
+}
+let parseCardDto:jsonAny=>cardDto = toObj(_, o => {
+    id: o->str("id"),
+    isDeleted: o->bool("isDeleted"),
+    crtTime: o->float("crtTime"),
+    data: o->obj("data", d => {
+        switch d->str("cardType") {
+            | _ => Translate(o->any("data")->parseTranslateCardDto)
+        }
+    }),
+})
 
 module CreateTranslateCard = {
     let name = "createTranslateCard"
 
-    type req = {
-        native:string,
-        foreign:string,
-        tran:string,
-        tagIds:array<string>,
-    }
+    type req = translateCardDto
 
-    let parseReq = toObj(_, o => { 
-        native: o->str("native"),
-        foreign: o->str("foreign"),
-        tran: o->str("tran"),
-        tagIds: o->arr("tagIds", toStr(_)),
-    })
+    let parseReq = parseTranslateCardDto
 
     type res = unit
 
     let parseRes = _ => ()
 }
+
+// module FindCards = {
+//     let name = "findCards"
+
+//     type req = {
+
+//     }
+
+//     let parseReq = parseTranslateCardDto
+
+//     type res = unit
+
+//     let parseRes = _ => ()
+// }
