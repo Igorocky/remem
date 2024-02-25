@@ -14,28 +14,26 @@ let isEmptyResponse = %raw("x => x === undefined")
 
 let addBeFuncToMap = (
     endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<beResponse>>, 
-    name:string, method:'req => promise<'res>
+    name:string, method:'req=>'res
 ):unit => {
     endpointsMap->Belt.HashMap.String.set(name, json => {
-        //todo: Use Promise.make
-        switch catchExn(() => json->castJsonToAny->method) {
-            | Error({exn,msg}) => {
-                let errMsg = `Internal error: ${msg}`
-                Console.error(errMsg)
-                Console.error(exn)
-                { err: Some(errMsg), data:None, emptyResp:None }->Promise.resolve
+        Promise.make((resolve,_) => {
+            switch catchExn(() => json->castJsonToAny->method) {
+                | Error({exn,msg}) => {
+                    let errMsg = `Internal error: ${msg}`
+                    Console.error(errMsg)
+                    Console.error(exn)
+                    resolve({ err: Some(errMsg), data:None, emptyResp:None })
+                }
+                | Ok(res) => {
+                    if (isEmptyResponse(res)) {
+                        resolve({ err: None, data:None, emptyResp:Some(true) })
+                    } else {
+                        resolve({ err: None, data:Some(res->castAnyToJson), emptyResp:None })
+                    }
+                }
             }
-            | Ok(res) => {
-                res
-                    ->Promise.thenResolve(res => {
-                        if (isEmptyResponse(res)) {
-                            { err: None, data:None, emptyResp:Some(true) }
-                        } else {
-                            { err: None, data:Some(res->castAnyToJson), emptyResp:None }
-                        }
-                    })
-            }
-        }
+        })
     })
 }
 
@@ -45,7 +43,7 @@ let registerBeFunc = (
     type res, 
     endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<beResponse>>, 
     m:Dto_utils.beFuncModule<req,res>, 
-    func:req => promise<res>
+    func:req=>res
 ): unit => {
     module M = unpack(m)
     addBeFuncToMap(endpointsMap, M.name, func )
