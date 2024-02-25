@@ -1,5 +1,5 @@
 type beResponse<'a> = {
     data:option<'a>,
-    emptyResponse:option<bool>,
+    emptyResp:option<bool>,
     err:option<string>,
 }

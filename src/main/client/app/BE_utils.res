@@ -1,4 +1,3 @@
-open Json_parse
 open Common_utils
 open FE_BE_commons
 
@@ -11,7 +10,7 @@ let parseBeResp: string => result<JSON.t,string> = respStr => {
         | Error({msg}) => Error(msg)
         | Ok(respJson) => {
             let resp: beResponse<JSON.t> = respJson->castJsonToAny
-            Ok((resp.data, resp.emptyResponse, resp.err))
+            Ok((resp.data, resp.emptyResp, resp.err))
         }
     }
 

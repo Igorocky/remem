@@ -1,5 +1,6 @@
 open Json_parse
 open Common_utils
+open FE_BE_commons
 
 type beFuncName = string
 type jsonStr = string
@@ -7,33 +8,33 @@ type endpoints = {
     execBeFunc: (beFuncName,JSON.t) => promise<jsonStr>
 }
 
-let anyToResponseObject = %raw("x => x === undefined ? {emptyResponse:true} : {data:x}")
+external castJsonToAny: JSON.t => 'a = "%identity"
+
+let isEmptyResponse = %raw("x => x === undefined")
 
 let addBeFuncToMap = (
     endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<string>>, 
-    name:string, inpParser:jsonAny=>'req, method:'req => promise<'res>
+    name:string, method:'req => promise<'res>
 ):unit => {
     endpointsMap->Belt.HashMap.String.set(name, json => {
-        switch fromJson(json, inpParser) {
-            | Error(msg) => {
-                let errMsg = `Internal error: cannot parse input request for the BE method '${name}': ${msg}`
+        //todo: Use Promise.make
+        switch catchExn(() => json->castJsonToAny->method) {
+            | Error({exn,msg}) => {
+                let errMsg = `Internal error: ${msg}`
                 Console.error(errMsg)
-                { "err": errMsg }->Common_utils.stringify->Promise.resolve
+                Console.error(exn)
+                { err: Some(errMsg), data:None, emptyResp:None }->Common_utils.stringify->Promise.resolve
             }
-            | Ok(req) => {
-                switch catchExn(() => req->method) {
-                    | Error({exn,msg}) => {
-                        let errMsg = `Internal error: ${msg}`
-                        Console.error(errMsg)
-                        Console.error(exn)
-                        { "err": errMsg }->Common_utils.stringify->Promise.resolve
-                    }
-                    | Ok(res) => {
-                        res
-                            ->Promise.thenResolve(anyToResponseObject)
-                            ->Promise.thenResolve(Common_utils.stringify)
-                    }
-                }
+            | Ok(res) => {
+                res
+                    ->Promise.thenResolve(res => {
+                        if (isEmptyResponse(res)) {
+                            { err: None, data:None, emptyResp:Some(true) }
+                        } else {
+                            { err: None, data:Some(res), emptyResp:None }
+                        }
+                    })
+                    ->Promise.thenResolve(Common_utils.stringify)
             }
         }
     })
@@ -48,7 +49,7 @@ let registerBeFunc = (
     func:req => promise<res>
 ): unit => {
     module M = unpack(m)
-    addBeFuncToMap(endpointsMap, M.name, M.parseReq, func )
+    addBeFuncToMap(endpointsMap, M.name, func )
 }
 
 let execBeMethod = (
