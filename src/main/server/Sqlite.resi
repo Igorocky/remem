@@ -8,6 +8,7 @@ let dbPrepare: (database,string) => statement
 let dbPragma: (database, string) => 'a
 let dbPragmaFull: (database,string) => array<{..}>
 let dbExec: (database,string) => database
+let dbTransaction: (database,'a=>'b) => ('a=>'b)
 
 let stmtRun: (statement,'a) => statementCompletionInfo
 let stmtRunNp: statement => statementCompletionInfo

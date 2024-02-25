@@ -67,20 +67,22 @@ let insertCardToTagQuery = `insert into ${S.cardToTag}
 let pauseTaskQuery = `update ${S.taskSch}
     set ${S.taskSch_paused} = 1 where ${S.taskSch_card} = :cardId and ${S.taskSch_taskType} = :taskType`
 let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):Dtos.CreateTranslateCard.res => {
-    db->dbPrepare(insertCardQuery)->stmtRun({"card_type":S.cardType_Translate->Int.fromString})->ignore
-    let cardId = db->dbPrepare("SELECT last_insert_rowid()||'' id")->stmtGetNp
-        ->Json_parse.fromJsonExn(Json_parse.toObj(_, Json_parse.str(_, "id")))
-    db->dbPrepare(insertTranslateCardQuery)
-        ->stmtRun({"cardId":cardId,"native":req.native,"foreign":req.foreign,"tran":req.tran})->ignore
-    req.tagIds->Array.forEach(tagId => {
-        db->dbPrepare(insertCardToTagQuery)->stmtRun({"cardId":cardId,"tagId":tagId})->ignore
-    })
-    if (req.nfPaused) {
-        db->dbPrepare(pauseTaskQuery)
-            ->stmtRun({"cardId":cardId,"taskType":S.taskType_TranslateNf})->ignore
-    }
-    if (req.fnPaused) {
-        db->dbPrepare(pauseTaskQuery)
-            ->stmtRun({"cardId":cardId,"taskType":S.taskType_TranslateFn})->ignore
-    }
+    dbTransaction(db, () => {
+        db->dbPrepare(insertCardQuery)->stmtRun({"card_type":S.cardType_Translate->Int.fromString})->ignore
+        let cardId = db->dbPrepare("SELECT last_insert_rowid()||'' id")->stmtGetNp
+            ->Json_parse.fromJsonExn(Json_parse.toObj(_, Json_parse.str(_, "id")))
+        db->dbPrepare(insertTranslateCardQuery)
+            ->stmtRun({"cardId":cardId,"native":req.native,"foreign":req.foreign,"tran":req.tran})->ignore
+        req.tagIds->Array.forEach(tagId => {
+            db->dbPrepare(insertCardToTagQuery)->stmtRun({"cardId":cardId,"tagId":tagId})->ignore
+        })
+        if (req.nfPaused) {
+            db->dbPrepare(pauseTaskQuery)
+                ->stmtRun({"cardId":cardId,"taskType":S.taskType_TranslateNf})->ignore
+        }
+        if (req.fnPaused) {
+            db->dbPrepare(pauseTaskQuery)
+                ->stmtRun({"cardId":cardId,"taskType":S.taskType_TranslateFn})->ignore
+        }
+    })()
 }

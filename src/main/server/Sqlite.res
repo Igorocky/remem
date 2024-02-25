@@ -10,6 +10,7 @@ type statementCompletionInfo = {
 @send external dbPragma: (database, string, @as(json`{simple:true}`) _) => 'a = "pragma"
 @send external dbPragmaFull: (database,string) => array<{..}> = "pragma"
 @send external dbExec: (database,string) => database = "exec"
+@send external dbTransaction: (database,'a=>'b) => ('a=>'b) = "transaction"
 
 @send external stmtRun: (statement,'a) => statementCompletionInfo = "run"
 @send external stmtRunNp: (statement) => statementCompletionInfo = "run"
