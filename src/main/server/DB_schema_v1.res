@@ -22,6 +22,8 @@ let taskType = "TASK_TYPE"
 let taskType_id = "ID"
 let taskType_name = "NAME"
 let taskType_cardType = "CARD_TYPE"
+let taskType_TranslateNf = cardType_Translate ++ "01"
+let taskType_TranslateFn = cardType_Translate ++ "02"
 
 saveScript(`
     create table ${taskType} (
@@ -31,10 +33,10 @@ saveScript(`
     ) strict;
 `)
 saveScript(`
-    insert into ${taskType} (${taskType_id}, ${taskType_name}, ${taskType_cardType}) 
-        values (${cardType_Translate}01, 'Native -> Foreign', ${cardType_Translate});
-    insert into ${taskType} (${taskType_id}, ${taskType_name}, ${taskType_cardType}) 
-        values (${cardType_Translate}02, 'Foreign -> Native', ${cardType_Translate});
+    insert into ${taskType} (${taskType_cardType}, ${taskType_name}, ${taskType_id}) 
+        values (${cardType_Translate}, 'Native -> Foreign', ${taskType_TranslateNf});
+    insert into ${taskType} (${taskType_cardType}, ${taskType_name}, ${taskType_id}) 
+        values (${cardType_Translate}, 'Foreign -> Native', ${taskType_TranslateFn});
 `)
 
 let tag = "TAG"
@@ -99,7 +101,7 @@ saveScript(`
 let taskSch = "TASK_SCHEDULE"
 let taskSch_id = "ID"
 let taskSch_card = "CARD"
-let taskSch_type = "TASK_TYPE"
+let taskSch_taskType = "TASK_TYPE"
 let taskSch_paused = "PAUSED"
 let taskSch_updAt = "UPD_AT"
 let taskSch_delay = "DELAY"
@@ -111,21 +113,21 @@ saveScript(`
     create table ${taskSch} (
         ${taskSch_id} integer primary key,
         ${taskSch_card} integer references ${card}(${card_id}) ON DELETE CASCADE ON UPDATE CASCADE,
-        ${taskSch_type} integer references ${taskType}(${taskType_id}) ON DELETE RESTRICT ON UPDATE CASCADE,
+        ${taskSch_taskType} integer references ${taskType}(${taskType_id}) ON DELETE RESTRICT ON UPDATE CASCADE,
         ${taskSch_paused} integer check (${taskSch_paused} in (0,1)) default 0,
         ${taskSch_updAt} real not null,
         ${taskSch_delay} text not null,
         ${taskSch_rnd} real not null,
         ${taskSch_nextAccInMs} real not null,
         ${taskSch_nextAccAt} real not null,
-        unique (${taskSch_card}, ${taskSch_type})
+        unique (${taskSch_card}, ${taskSch_taskType})
     );
 `)
 saveScript(`
     create trigger create_tasks after insert on ${card} for each row begin
         insert into ${taskSch} (
             ${taskSch_card}, 
-            ${taskSch_type},
+            ${taskSch_taskType},
             ${taskSch_updAt},
             ${taskSch_delay},
             ${taskSch_rnd},
@@ -134,7 +136,7 @@ saveScript(`
         )
         select
             /* ${taskSch_card},  */ new.${card_id},
-            /* ${taskSch_type}, */ tt.${taskType_id},
+            /* ${taskSch_taskType}, */ tt.${taskType_id},
             /* ${taskSch_updAt}, */ unixepoch()*1000,
             /* ${taskSch_delay}, */ '1s',
             /* ${taskSch_rnd}, */ 0,

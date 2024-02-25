@@ -11,6 +11,8 @@ let taskType: string
 let taskType_id: string
 let taskType_name: string
 let taskType_cardType: string
+let taskType_TranslateNf: string
+let taskType_TranslateFn: string
 
 let tag: string
 let tag_id: string
@@ -36,7 +38,7 @@ let cardTr_tran: string
 let taskSch: string
 let taskSch_id: string
 let taskSch_card: string
-let taskSch_type: string
+let taskSch_taskType: string
 let taskSch_paused: string
 let taskSch_updAt: string
 let taskSch_delay: string

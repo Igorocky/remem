@@ -30,6 +30,8 @@ let makeInitialCardData = (cardType:cardType) => {
                 foreign:"",
                 tran:"",
                 tagIds:[],
+                nfPaused:false,
+                fnPaused:false,
             })
         }
     }
@@ -73,6 +75,14 @@ let setTran = (st:state,text:string):state => {
 
 let setTagIds = (st:state,tags:array<Dtos.tagDto>):state => {
     updateTranslateCardData(st, data => {...data, tagIds:tags->Array.map(tag => tag.id)})
+}
+
+let setNfPaused = (st:state,paused:bool):state => {
+    updateTranslateCardData(st, data => {...data, nfPaused:paused})
+}
+
+let setFnPaused = (st:state,paused:bool):state => {
+    updateTranslateCardData(st, data => {...data, fnPaused:paused})
 }
 
 let createTranslateCard:beFunc<Dtos.CreateTranslateCard.req, Dtos.CreateTranslateCard.res> = 
@@ -148,6 +158,24 @@ let make = (
                 //     kbrdClbkMake(~key=keyEnter, ~act=()=>onSave(state.tag)),
                 //     kbrdClbkMake(~key=keyEsc, ~act=onCancel),
                 // )
+            />
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked=data.nfPaused
+                        onChange={evt2bool(checked => setState(setNfPaused(_,checked)))}
+                    />
+                }
+                label="pause Native -> Foreign"
+            />
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked=data.fnPaused
+                        onChange={evt2bool(checked => setState(setFnPaused(_,checked)))}
+                    />
+                }
+                label="pause Foreign -> Native"
             />
             <TagSelector
                 modalRef

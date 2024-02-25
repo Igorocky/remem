@@ -38,6 +38,8 @@ type translateCardDto = {
     foreign:string,
     tran:string,
     tagIds:array<string>,
+    nfPaused:bool,
+    fnPaused:bool,
 }
 
 type cardType =

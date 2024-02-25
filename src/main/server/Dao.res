@@ -60,10 +60,12 @@ let deleteTags = (db:database, req:Dtos.DeleteTags.req):Dtos.DeleteTags.res => {
 
 let insertCardQuery = `insert into ${S.card}(${S.card_type}) values (:card_type)`
 let insertTranslateCardQuery = `insert into ${S.cardTr}
-(${S.cardTr_id}, ${S.cardTr_native}, ${S.cardTr_foreign}, ${S.cardTr_tran}) 
-values (:cardId, :native, :foreign, :tran)`
+    (${S.cardTr_id}, ${S.cardTr_native}, ${S.cardTr_foreign}, ${S.cardTr_tran}) 
+    values (:cardId, :native, :foreign, :tran)`
 let insertCardToTagQuery = `insert into ${S.cardToTag}
-(${S.cardToTag_cardId}, ${S.cardToTag_tagId}) values (:cardId, :tagId)`
+    (${S.cardToTag_cardId}, ${S.cardToTag_tagId}) values (:cardId, :tagId)`
+let pauseTaskQuery = `update ${S.taskSch}
+    set ${S.taskSch_paused} = 1 where ${S.taskSch_card} = :cardId and ${S.taskSch_taskType} = :taskType`
 let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):Dtos.CreateTranslateCard.res => {
     db->dbPrepare(insertCardQuery)->stmtRun({"card_type":S.cardType_Translate->Int.fromString})->ignore
     let cardId = db->dbPrepare("SELECT last_insert_rowid()||'' id")->stmtGetNp
@@ -73,4 +75,12 @@ let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):Dtos.C
     req.tagIds->Array.forEach(tagId => {
         db->dbPrepare(insertCardToTagQuery)->stmtRun({"cardId":cardId,"tagId":tagId})->ignore
     })
+    if (req.nfPaused) {
+        db->dbPrepare(pauseTaskQuery)
+            ->stmtRun({"cardId":cardId,"taskType":S.taskType_TranslateNf})->ignore
+    }
+    if (req.fnPaused) {
+        db->dbPrepare(pauseTaskQuery)
+            ->stmtRun({"cardId":cardId,"taskType":S.taskType_TranslateFn})->ignore
+    }
 }
