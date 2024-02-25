@@ -1,4 +1,5 @@
 open Sqlite
+open Json_parse
 
 module S = DB_schema_v1
 
@@ -30,7 +31,10 @@ let getAllTags = (db:database):promise<Dtos.GetAllTags.res> => {
         resolve(
             {
                 Dtos.GetAllTags.tags: db->dbPrepare(getAllTagsQuery)->stmtAllNp
-                    ->Array.map(Json_parse.fromJsonExn(_,Dtos.parseTagDto))
+                    ->Array.map(fromJsonExn(_,toObj(_, o => {
+                        Dtos.id: o->str("id"),
+                        name: o->str("name"),
+                    })))
             }
         )
     })

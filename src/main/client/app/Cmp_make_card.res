@@ -5,6 +5,18 @@ open React_rnd_utils
 open Modal
 open Dtos
 
+let cardTypeToStr = (cardType:cardType) => {
+    switch cardType {
+        | Translate => "Translate"
+    }
+}
+
+let strToCardType = (str:string):cardType => {
+    switch str {
+        | _ => Translate
+    }
+}
+
 type state = {
     cardType:cardType,
     cardData:cardData,
