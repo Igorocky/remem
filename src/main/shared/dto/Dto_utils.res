@@ -1,11 +1,7 @@
-open Json_parse
-
 module type BeFunction = {
     let name: string
     type req
     type res
-    let parseReq: jsonAny => req
-    let parseRes: jsonAny => res
 }
 
 // https://forum.rescript-lang.org/t/how-to-use-the-first-class-module-in-rescript/3238/5

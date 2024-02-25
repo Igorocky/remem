@@ -14,15 +14,9 @@ module GetAllTags = {
 
     type req = unit
 
-    let parseReq = _ => ()
-
     type res = {
         tags:array<tagDto>
     }
-
-    let parseRes = toObj(_, o => { 
-        tags: o->arr("tags", parseTagDto) 
-    })
 }
 
 module CreateTag = {
@@ -32,13 +26,7 @@ module CreateTag = {
         name: string
     }
 
-    let parseReq = toObj(_, o => { 
-        name: o->str("name") 
-    })
-
     type res = GetAllTags.res
-
-    let parseRes = GetAllTags.parseRes
 }
 
 module UpdateTag = {
@@ -46,11 +34,7 @@ module UpdateTag = {
 
     type req = tagDto
 
-    let parseReq = parseTagDto
-
     type res = GetAllTags.res
-
-    let parseRes = GetAllTags.parseRes
 }
 
 module DeleteTags = {
@@ -60,13 +44,7 @@ module DeleteTags = {
         ids: array<string>
     }
 
-    let parseReq = toObj(_, o => { 
-        ids: o->arr("ids", toStr(_)) 
-    })
-
     type res = GetAllTags.res
-
-    let parseRes = GetAllTags.parseRes
 }
 
 type translateCardDto = {
@@ -123,11 +101,7 @@ module CreateTranslateCard = {
 
     type req = translateCardDto
 
-    let parseReq = parseTranslateCardDto
-
     type res = unit
-
-    let parseRes = _ => ()
 }
 
 module FindCards = {
@@ -137,11 +111,5 @@ module FindCards = {
         cardType:cardType
     }
 
-    let parseReq = toObj(_, o => { 
-        cardType: o->str("cardType")->strToCardType 
-    })
-
     type res = array<cardDto>
-
-    let parseRes = _ => ()
 }
