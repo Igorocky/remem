@@ -82,6 +82,21 @@ let parseTranslateCardDto:jsonAny=>translateCardDto = toObj(_, o => {
     tagIds: o->arr("tagIds", toStr(_)),
 })
 
+type cardType =
+    | Translate
+
+let cardTypeToStr = (cardType:cardType) => {
+    switch cardType {
+        | Translate => "Translate"
+    }
+}
+
+let strToCardType = (str:string):cardType => {
+    switch str {
+        | _ => Translate
+    }
+}
+
 @tag("cardType")
 type cardData =
     | @as("Translate") Translate(translateCardDto)
@@ -115,16 +130,18 @@ module CreateTranslateCard = {
     let parseRes = _ => ()
 }
 
-// module FindCards = {
-//     let name = "findCards"
+module FindCards = {
+    let name = "findCards"
 
-//     type req = {
+    type req = {
+        cardType:cardType
+    }
 
-//     }
+    let parseReq = toObj(_, o => { 
+        cardType: o->str("cardType")->strToCardType 
+    })
 
-//     let parseReq = parseTranslateCardDto
+    type res = array<cardDto>
 
-//     type res = unit
-
-//     let parseRes = _ => ()
-// }
+    let parseRes = _ => ()
+}

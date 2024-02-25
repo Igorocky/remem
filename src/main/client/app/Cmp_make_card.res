@@ -4,28 +4,11 @@ open BE_utils
 open React_rnd_utils
 open Modal
 open Common_utils
-
-type cardType =
-    | Translate
-
-type cardData =
-    | Translate(Dtos.CreateTranslateCard.req)
+open Dtos
 
 type state = {
     cardType:cardType,
     cardData:cardData,
-}
-
-let cardTypeToStr = (cardType:cardType) => {
-    switch cardType {
-        | Translate => "Translate"
-    }
-}
-
-let strToCardType = (str:string):cardType => {
-    switch str {
-        | _ => Translate
-    }
 }
 
 let makeInitialCardData = (cardType:cardType) => {
