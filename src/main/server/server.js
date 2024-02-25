@@ -9,7 +9,11 @@ app.use(express.json({limit:'10MB'}))
 
 app.post('/be/:funcName', async (req, res) => {
     const funcName = req.params.funcName
-    res.send(await backend.execBeFunc(funcName, req.body))
+    try {
+        res.send(await backend.execBeFunc(funcName, req.body))
+    } catch (ex) {
+        res.send(JSON.stringify({err:ex.message}))
+    }
 })
 
 app.listen(port, () => {
