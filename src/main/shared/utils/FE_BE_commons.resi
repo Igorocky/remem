@@ -1,5 +1,5 @@
-type beResponse<'a> = {
-    data:option<'a>,
+type beResponse = {
+    data:option<JSON.t>,
     emptyResp:option<bool>,
     err:option<string>,
 }

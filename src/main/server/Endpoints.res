@@ -1,19 +1,19 @@
-open Json_parse
 open Common_utils
 open FE_BE_commons
 
 type beFuncName = string
 type jsonStr = string
 type endpoints = {
-    execBeFunc: (beFuncName,JSON.t) => promise<jsonStr>
+    execBeFunc: (beFuncName,JSON.t) => promise<beResponse>
 }
 
 external castJsonToAny: JSON.t => 'a = "%identity"
+external castAnyToJson: 'a => JSON.t = "%identity"
 
 let isEmptyResponse = %raw("x => x === undefined")
 
 let addBeFuncToMap = (
-    endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<string>>, 
+    endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<beResponse>>, 
     name:string, method:'req => promise<'res>
 ):unit => {
     endpointsMap->Belt.HashMap.String.set(name, json => {
@@ -23,7 +23,7 @@ let addBeFuncToMap = (
                 let errMsg = `Internal error: ${msg}`
                 Console.error(errMsg)
                 Console.error(exn)
-                { err: Some(errMsg), data:None, emptyResp:None }->Common_utils.stringify->Promise.resolve
+                { err: Some(errMsg), data:None, emptyResp:None }->Promise.resolve
             }
             | Ok(res) => {
                 res
@@ -31,10 +31,9 @@ let addBeFuncToMap = (
                         if (isEmptyResponse(res)) {
                             { err: None, data:None, emptyResp:Some(true) }
                         } else {
-                            { err: None, data:Some(res), emptyResp:None }
+                            { err: None, data:Some(res->castAnyToJson), emptyResp:None }
                         }
                     })
-                    ->Promise.thenResolve(Common_utils.stringify)
             }
         }
     })
@@ -44,7 +43,7 @@ let addBeFuncToMap = (
 let registerBeFunc = (
     type req, 
     type res, 
-    endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<string>>, 
+    endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<beResponse>>, 
     m:Dto_utils.beFuncModule<req,res>, 
     func:req => promise<res>
 ): unit => {
@@ -53,10 +52,10 @@ let registerBeFunc = (
 }
 
 let execBeMethod = (
-    endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<string>>, 
+    endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<beResponse>>, 
     name:string,
     data:JSON.t,
-):promise<string> => {
+):promise<beResponse> => {
     switch endpointsMap->Belt.HashMap.String.get(name) {
         | None => Js.Exn.raiseError(`Cannot find a handler for the method '${name}'`)
         | Some(hnd) => hnd(data)
@@ -64,7 +63,7 @@ let execBeMethod = (
 }
 
 let makeEndpoints = (db:Sqlite.database):endpoints => {
-    let endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<string>> = Belt.HashMap.String.make(~hintSize=100)
+    let endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<beResponse>> = Belt.HashMap.String.make(~hintSize=100)
     registerBeFunc(endpointsMap, module(Dtos.GetAllTags), () => Dao.getAllTags(db) )
     registerBeFunc(endpointsMap, module(Dtos.CreateTag), Dao.createTag(db, _) )
     registerBeFunc(endpointsMap, module(Dtos.UpdateTag), Dao.updateTag(db, _) )

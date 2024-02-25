@@ -5,11 +5,11 @@ open FE_BE_commons
 
 external castJsonToAny: JSON.t => 'a = "%identity"
 
-let parseBeResp: string => result<JSON.t,string> = respStr => {
+let parseBeResp = (respStr:string):result<JSON.t,string> => {
     let parsed = switch catchExn(() => JSON.parseExn(respStr)) {
         | Error({msg}) => Error(msg)
         | Ok(respJson) => {
-            let resp: beResponse<JSON.t> = respJson->castJsonToAny
+            let resp: beResponse = respJson->castJsonToAny
             Ok((resp.data, resp.emptyResp, resp.err))
         }
     }
