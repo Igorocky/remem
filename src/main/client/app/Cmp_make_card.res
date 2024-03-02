@@ -180,6 +180,7 @@ let make = (
             <TagSelector
                 modalRef
                 allTags
+                initTagIds=tagIds
                 createTag
                 getRemainingTags
                 onChange = {tags => setState(setTagIds(_,tags))}

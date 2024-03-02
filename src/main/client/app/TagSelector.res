@@ -14,9 +14,14 @@ type state = {
     reqCnt:int,
 }
 
-let makeInitialState = (~allTags:array<tagDto>, ~initTags:array<tagDto>,) => {
+let makeInitialState = (~allTags:array<tagDto>, ~initTags:array<tagDto>, ~initTagIds:array<string>,) => {
+    let selectedTags = if (initTagIds->Array.length > initTags->Array.length) {
+        allTags->Array.filter(tag => initTagIds->Array.includes(tag.id))
+    } else {
+        initTags
+    }
     {
-        selectedTags: initTags,
+        selectedTags,
         filterText: "",
         filteredTags: allTags,
         remainingTags: allTags,
@@ -67,11 +72,12 @@ let make = (
     ~modalRef:modalRef,
     ~allTags:array<tagDto>,
     ~initTags: array<Dtos.tagDto> = [],
+    ~initTagIds: array<string> = [],
     ~createTag:tagDto=>promise<result<tagDto,string>>,
     ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
     ~onChange: array<Dtos.tagDto> => unit,
 ) => {
-    let (state, setState) = React.useState(() => makeInitialState(~allTags, ~initTags))
+    let (state, setState) = React.useState(() => makeInitialState(~allTags, ~initTags, ~initTagIds))
 
     let getExn = getExn(_, modalRef)
 
