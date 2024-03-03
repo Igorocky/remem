@@ -67,20 +67,21 @@ let insertCardToTagQuery = `insert into ${S.cardToTag}
 let pauseTaskQuery = `update ${S.taskSch}
     set ${S.taskSch_paused} = 1 where ${S.taskSch_card} = :cardId and ${S.taskSch_taskType} = :taskType`
 let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):Dtos.CreateTranslateCard.res => {
+    let cardData = req.cardData
     dbTransaction(db, () => {
         db->dbRun( insertCardQuery, {"card_type":S.cardType_Translate->Int.fromString} )->ignore
         let cardId = db->dbGetNp("SELECT last_insert_rowid()||'' id")->fromJsonExn(toObj(_, str(_, "id")))
         db->dbRun(
             insertTranslateCardQuery, 
-            {"cardId":cardId,"native":req.native,"foreign":req.foreign,"tran":req.tran}
+            {"cardId":cardId,"native":cardData.native,"foreign":cardData.foreign,"tran":cardData.tran}
         )->ignore
         req.tagIds->Array.forEach(tagId => {
             db->dbRun(insertCardToTagQuery, {"cardId":cardId,"tagId":tagId})->ignore
         })
-        if (req.nfPaused) {
+        if (cardData.nfPaused) {
             db->dbRun(pauseTaskQuery, {"cardId":cardId,"taskType":S.taskType_TranslateNf})->ignore
         }
-        if (req.fnPaused) {
+        if (cardData.fnPaused) {
             db->dbRun(pauseTaskQuery, {"cardId":cardId,"taskType":S.taskType_TranslateFn})->ignore
         }
     })()

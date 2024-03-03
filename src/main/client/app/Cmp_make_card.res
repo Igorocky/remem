@@ -20,6 +20,7 @@ let strToCardType = (str:string):cardType => {
 type state = {
     cardType:cardType,
     cardData:cardData,
+    tagIds:array<string>,
 }
 
 let makeInitialCardData = (cardType:cardType) => {
@@ -29,7 +30,6 @@ let makeInitialCardData = (cardType:cardType) => {
                 native:"",
                 foreign:"",
                 tran:"",
-                tagIds:[],
                 nfPaused:false,
                 fnPaused:false,
             })
@@ -41,6 +41,7 @@ let makeInitialState = () => {
     {
         cardType:Translate,
         cardData:makeInitialCardData(Translate),
+        tagIds:[],
     }
 }
 
@@ -49,13 +50,14 @@ let setCardType = (st:state, newCardType:cardType):state => {
         st
     } else {
         {
+            ...st,
             cardType:newCardType,
             cardData:makeInitialCardData(newCardType),
         }
     }
 }
 
-let updateTranslateCardData = (st:state, upd:Dtos.CreateTranslateCard.req=>Dtos.CreateTranslateCard.req):state => {
+let updateTranslateCardData = (st:state, upd:translateCardDto=>translateCardDto):state => {
     switch st.cardData {
         | Translate(data) => { ...st, cardData: Translate(data->upd) }
     }
@@ -74,7 +76,7 @@ let setTran = (st:state,text:string):state => {
 }
 
 let setTagIds = (st:state,tags:array<Dtos.tagDto>):state => {
-    updateTranslateCardData(st, data => {...data, tagIds:tags->Array.map(tag => tag.id)})
+    {...st, tagIds:tags->Array.map(tag => tag.id)}
 }
 
 let setNfPaused = (st:state,paused:bool):state => {
@@ -122,8 +124,8 @@ let make = (
         </FormControl>
     }
 
-    let rndTranslateCardData = (data:Dtos.CreateTranslateCard.req) => {
-        let { native, foreign, tran, tagIds, } = data
+    let rndTranslateCardData = (data:translateCardDto) => {
+        let { native, foreign, tran, } = data
         <Col>
             <TextField 
                 size=#small
@@ -180,7 +182,7 @@ let make = (
             <TagSelector
                 modalRef
                 allTags
-                initTagIds=tagIds
+                initTagIds=state.tagIds
                 createTag
                 getRemainingTags
                 onChange = {tags => setState(setTagIds(_,tags))}
@@ -196,8 +198,8 @@ let make = (
 
     let actSave = async () => {
         switch state.cardData {
-            | Translate(data) => {
-                await createTranslateCard(data)->getExn
+            | Translate(cardData) => {
+                await createTranslateCard({cardData, tagIds:state.tagIds})->getExn
                 setState(st => {
                     let st = st->setNative("")
                     let st = st->setForeign("")

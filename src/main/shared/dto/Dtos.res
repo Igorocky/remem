@@ -37,7 +37,6 @@ type translateCardDto = {
     native:string,
     foreign:string,
     tran:string,
-    tagIds:array<string>,
     nfPaused:bool,
     fnPaused:bool,
 }
@@ -53,11 +52,15 @@ type cardDto = {
     isDeleted:bool,
     crtTime:float,
     data:cardData,
+    tagIds:array<string>,
 }
 
 module CreateTranslateCard = {
     let name = "createTranslateCard"
-    type req = translateCardDto
+    type req = {
+        cardData:translateCardDto,
+        tagIds:array<string>,
+    }
     type res = unit
 }
 
