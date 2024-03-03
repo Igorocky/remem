@@ -65,7 +65,7 @@ let insertTranslateCardQuery = `insert into ${S.cardTr}
 let insertCardToTagQuery = `insert into ${S.cardToTag}
     (${S.cardToTag_cardId}, ${S.cardToTag_tagId}) values (:cardId, :tagId)`
 let pauseTaskQuery = `update ${S.taskSch}
-    set ${S.taskSch_paused} = 1 where ${S.taskSch_card} = :cardId and ${S.taskSch_taskType} = :taskType`
+    set ${S.taskSch_paused} = 1 where ${S.taskSch_cardId} = :cardId and ${S.taskSch_taskType} = :taskType`
 let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):Dtos.CreateTranslateCard.res => {
     let cardData = req.cardData
     dbTransaction(db, () => {
@@ -85,4 +85,53 @@ let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):Dtos.C
             db->dbRun(pauseTaskQuery, {"cardId":cardId,"taskType":S.taskType_TranslateFn})->ignore
         }
     })()
+}
+
+let makeFindCardsQuery = (filter:Dtos.cardFilterDto):string => {
+    `
+    select * from (
+        select
+            (row_number() over () - 1) / ${filter.itemsPerPage->Int.toString} page_idx,
+            C.${S.card_id} card_id, 
+            C.${S.card_deleted} card_deleted, 
+            C.${S.card_crtTime} card_crt_time, 
+            C.${S.card_type}||'' card_type,
+            group_concat(distinct ':'||T.${S.cardToTag_tagId}||':') tag_ids,
+            max(CT.${S.cardTr_native}) tr_native, 
+            max(CT.${S.cardTr_foreign}) tr_foreign, 
+            max(CT.${S.cardTr_tran}) tr_tran,
+            max(case when S.${S.taskSch_taskType} = ${S.taskType_TranslateNf} then S.${S.taskSch_paused} else 0 end) tr_nf_paused,
+            max(case when S.${S.taskSch_taskType} = ${S.taskType_TranslateFn} then S.${S.taskSch_paused} else 0 end) tr_fn_paused
+        from
+            ${S.card} C
+            left join ${S.cardToTag} T on C.${S.card_id} = T.${S.cardToTag_cardId}
+            left join ${S.cardTr} CT on C.${S.card_id} = CT.${S.cardTr_id}
+            left join ${S.taskSch} S on C.${S.card_id} = S.${S.taskSch_cardId}
+        group by C.${S.card_id}, C.${S.card_deleted}, C.${S.card_crtTime}
+        order by C.${S.card_crtTime}
+    ) where page_idx = ${filter.pageIdx->Int.toString}
+    `
+}
+
+let findCards = (db:database, req:Dtos.FindCards.req):Dtos.FindCards.res => {
+    db->dbAllNp(makeFindCardsQuery(req))->Array.map(row => fromJsonExn(row, toObj(_, o => {
+        {
+            Dtos.id: o->str("card_id"),
+            isDeleted: o->int("card_deleted") > 0,
+            crtTime: o->float("card_crt_time"),
+            tagIds: o->strOpt("tag_ids")->Option.map(idsStr => [])->Option.getOr([]),
+            data:
+                if (S.cardType_Translate == o->str("card_type")) {
+                    Translate({
+                        Dtos.native: o->str("tr_native"),
+                        foreign: o->str("tr_foreign"),
+                        tran: o->str("tr_tran"),
+                        nfPaused: o->int("tr_nf_paused") > 0,
+                        fnPaused: o->int("tr_fn_paused") > 0,
+                    })
+                } else {
+                    Js.Exn.raiseError(`Unexpected card type: ${o->str("card_type")}`)
+                },
+        }
+    })))
 }

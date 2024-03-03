@@ -23,7 +23,7 @@ let card: string
 let card_id: string
 let card_type: string
 let card_deleted: string
-let card_crt_time: string
+let card_crtTime: string
 
 let cardToTag: string
 let cardToTag_cardId: string
@@ -37,7 +37,7 @@ let cardTr_tran: string
 
 let taskSch: string
 let taskSch_id: string
-let taskSch_card: string
+let taskSch_cardId: string
 let taskSch_taskType: string
 let taskSch_paused: string
 let taskSch_updAt: string

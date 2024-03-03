@@ -64,10 +64,14 @@ module CreateTranslateCard = {
     type res = unit
 }
 
+type cardFilterDto = {
+    itemsPerPage:int,
+    pageIdx:int,
+    // cardType:option<cardType>,
+}
+
 module FindCards = {
     let name = "findCards"
-    type req = {
-        cardType:cardType
-    }
+    type req = cardFilterDto
     type res = array<cardDto>
 }

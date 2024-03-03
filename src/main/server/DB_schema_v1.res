@@ -56,14 +56,14 @@ let card = "CARD"
 let card_id = "ID"
 let card_type = "TYPE"
 let card_deleted = "DELETED"
-let card_crt_time = "CRT_TIME"
+let card_crtTime = "CRT_TIME"
 
 saveScript(`
     create table ${card} (
         ${card_id} integer primary key,
         ${card_type} integer references ${cardType}(${cardType_id}) ON DELETE RESTRICT ON UPDATE CASCADE,
         ${card_deleted} integer check (${card_deleted} in (0,1)) default 0,
-        ${card_crt_time} real not null default ( unixepoch() * 1000 )
+        ${card_crtTime} real not null default ( unixepoch() * 1000 )
     ) strict;
 `)
 
@@ -100,7 +100,7 @@ saveScript(`
 
 let taskSch = "TASK_SCHEDULE"
 let taskSch_id = "ID"
-let taskSch_card = "CARD"
+let taskSch_cardId = "CARD"
 let taskSch_taskType = "TASK_TYPE"
 let taskSch_paused = "PAUSED"
 let taskSch_updAt = "UPD_AT"
@@ -112,7 +112,7 @@ let taskSch_nextAccAt = "NEXT_ACCESS_AT"
 saveScript(`
     create table ${taskSch} (
         ${taskSch_id} integer primary key,
-        ${taskSch_card} integer references ${card}(${card_id}) ON DELETE CASCADE ON UPDATE CASCADE,
+        ${taskSch_cardId} integer references ${card}(${card_id}) ON DELETE CASCADE ON UPDATE CASCADE,
         ${taskSch_taskType} integer references ${taskType}(${taskType_id}) ON DELETE RESTRICT ON UPDATE CASCADE,
         ${taskSch_paused} integer check (${taskSch_paused} in (0,1)) default 0,
         ${taskSch_updAt} real not null,
@@ -120,13 +120,13 @@ saveScript(`
         ${taskSch_rnd} real not null,
         ${taskSch_nextAccInMs} real not null,
         ${taskSch_nextAccAt} real not null,
-        unique (${taskSch_card}, ${taskSch_taskType})
+        unique (${taskSch_cardId}, ${taskSch_taskType})
     );
 `)
 saveScript(`
     create trigger create_tasks after insert on ${card} for each row begin
         insert into ${taskSch} (
-            ${taskSch_card}, 
+            ${taskSch_cardId}, 
             ${taskSch_taskType},
             ${taskSch_updAt},
             ${taskSch_delay},
@@ -135,7 +135,7 @@ saveScript(`
             ${taskSch_nextAccAt}
         )
         select
-            /* ${taskSch_card},  */ new.${card_id},
+            /* ${taskSch_cardId},  */ new.${card_id},
             /* ${taskSch_taskType}, */ tt.${taskType_id},
             /* ${taskSch_updAt}, */ unixepoch()*1000,
             /* ${taskSch_delay}, */ '1s',
