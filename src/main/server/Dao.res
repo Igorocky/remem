@@ -113,13 +113,17 @@ let makeFindCardsQuery = (filter:Dtos.cardFilterDto):string => {
     `
 }
 
+let emptyArr = []
 let findCards = (db:database, req:Dtos.FindCards.req):Dtos.FindCards.res => {
     db->dbAllNp(makeFindCardsQuery(req))->Array.map(row => fromJsonExn(row, toObj(_, o => {
         {
             Dtos.id: o->str("card_id"),
             isDeleted: o->int("card_deleted") > 0,
             crtTime: o->float("card_crt_time"),
-            tagIds: o->strOpt("tag_ids")->Option.map(idsStr => [])->Option.getOr([]),
+            tagIds: o->strOpt("tag_ids")
+                ->Option.map(String.split(_, ","))
+                ->Option.map(strArr => strArr->Array.map(str => str->String.substring(~start=1,~end=str->String.length-1)))
+                ->Option.getOr(emptyArr),
             data:
                 if (S.cardType_Translate == o->str("card_type")) {
                     Translate({
