@@ -92,7 +92,7 @@ let makeFindCardsQuery = (filter:Dtos.cardFilterDto):string => {
     select * from (
         select
             (row_number() over () - 1) / ${filter.itemsPerPage->Int.toString} page_idx,
-            C.${S.card_id} card_id, 
+            C.${S.card_id}||'' card_id, 
             C.${S.card_deleted} card_deleted, 
             C.${S.card_crtTime} card_crt_time, 
             C.${S.card_type}||'' card_type,
@@ -115,7 +115,8 @@ let makeFindCardsQuery = (filter:Dtos.cardFilterDto):string => {
 
 let emptyArr = []
 let findCards = (db:database, req:Dtos.FindCards.req):Dtos.FindCards.res => {
-    db->dbAllNp(makeFindCardsQuery(req))->Array.map(row => fromJsonExn(row, toObj(_, o => {
+    let rows = db->dbAllNp(makeFindCardsQuery(req))
+    rows->Array.map(row => fromJsonExn(row, toObj(_, o => {
         {
             Dtos.id: o->str("card_id"),
             isDeleted: o->int("card_deleted") > 0,
@@ -127,9 +128,9 @@ let findCards = (db:database, req:Dtos.FindCards.req):Dtos.FindCards.res => {
             data:
                 if (S.cardType_Translate == o->str("card_type")) {
                     Translate({
-                        Dtos.native: o->str("tr_native"),
-                        foreign: o->str("tr_foreign"),
-                        tran: o->str("tr_tran"),
+                        Dtos.native: o->strOpt("tr_native")->Option.getOr(""),
+                        foreign: o->strOpt("tr_foreign")->Option.getOr(""),
+                        tran: o->strOpt("tr_tran")->Option.getOr(""),
                         nfPaused: o->int("tr_nf_paused") > 0,
                         fnPaused: o->int("tr_fn_paused") > 0,
                     })
