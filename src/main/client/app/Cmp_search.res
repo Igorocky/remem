@@ -104,12 +104,36 @@ let make = (
         }
     }
 
+    let rndCard = (card:cardDto) => {
+        switch card.data {
+            | Translate(data) => {
+                <Paper key=card.id>
+                    {`Translate: ${data.foreign}`->React.string}
+                </Paper>
+            }
+        }
+    }
+
     let rndSearchResult = () => {
         switch state.cards {
             | None => React.null
             | Some(cards) => {
                 <Col>
                     {rndPagination()}
+                    <table>
+                        <tbody>
+                            {
+                                // cards->Array.map(rndCard)->React.array
+                                cards->Array.map(card => {
+                                    <tr key=card.id>
+                                        <td>{rndSmallTextBtn(~text="edit", ~color="lightgrey", ~onClick=()=>())}</td>
+                                        <td>{rndSmallTextBtn(~text="delete", ~color="lightgrey", ~onClick=()=>()->ignore)}</td>
+                                        <td>{rndCard(card)}</td>
+                                    </tr>
+                                })->React.array
+                            }
+                        </tbody>
+                    </table>
                     {rndPagination()}
                 </Col>
             }
