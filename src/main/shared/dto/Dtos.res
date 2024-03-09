@@ -67,6 +67,7 @@ module CreateTranslateCard = {
 type cardFilterDto = {
     itemsPerPage:int,
     pageIdx:int,
+    cardIds?:array<string>,
     // cardType:option<cardType>,
 }
 

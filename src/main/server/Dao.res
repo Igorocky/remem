@@ -87,8 +87,20 @@ let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):Dtos.C
     })()
 }
 
-let makeFindCardsQuery = (filter:Dtos.cardFilterDto):string => {
-    `
+let makeFindCardsQuery = (filter:Dtos.cardFilterDto):(string,Dict.t<JSON.t>) => {
+    let params = Dict.make()
+    let where = ["( 1 = 1 )"]
+    filter.cardIds->Option.forEach(ids => {
+        let listOfParams = []
+        ids->Array.forEachWithIndex((id,idx) => {
+            let paramName = "cardId" ++ idx->Int.toString
+            let paramValue = JSON.Encode.string(id)
+            params->Dict.set(paramName, paramValue)
+            listOfParams->Array.push(":" ++ paramName)
+        })
+        where->Array.push(`( C.${S.card_id} in (` ++ listOfParams->Array.joinWith(", ") ++ ") )")
+    })
+    let query = `
     select * from (
         select
             (row_number() over () - 1) / ${filter.itemsPerPage->Int.toString} page_idx,
@@ -107,15 +119,18 @@ let makeFindCardsQuery = (filter:Dtos.cardFilterDto):string => {
             left join ${S.cardToTag} T on C.${S.card_id} = T.${S.cardToTag_cardId}
             left join ${S.cardTr} CT on C.${S.card_id} = CT.${S.cardTr_id}
             left join ${S.taskSch} S on C.${S.card_id} = S.${S.taskSch_cardId}
+        where ${where->Array.joinWith(" and ")}
         group by C.${S.card_id}, C.${S.card_deleted}, C.${S.card_crtTime}
         order by C.${S.card_crtTime}
     ) where page_idx = ${filter.pageIdx->Int.toString}
     `
+    (query,params)
 }
 
 let emptyArr = []
 let findCards = (db:database, req:Dtos.FindCards.req):Dtos.FindCards.res => {
-    let rows = db->dbAllNp(makeFindCardsQuery(req))
+    let (query,params) = makeFindCardsQuery(req)
+    let rows = db->dbAll(query,params)
     rows->Array.map(row => fromJsonExn(row, toObj(_, o => {
         {
             Dtos.id: o->str("card_id"),
