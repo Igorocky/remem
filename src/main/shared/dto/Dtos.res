@@ -57,14 +57,28 @@ type cardDto = {
 
 module DeleteCard = {
     let name = "deleteCard"
-    type req = string
+    type req = {cardId:string}
     type res = cardDto
 }
 
 module RestoreCard = {
     let name = "restoreCard"
-    type req = string
+    type req = {cardId:string}
     type res = cardDto
+}
+
+type cardFilterDto = {
+    itemsPerPage?:int,
+    pageIdx?:int,
+    deleted?:bool,
+    cardIds?:array<string>,
+    // cardType:option<cardType>,
+}
+
+module FindCards = {
+    let name = "findCards"
+    type req = cardFilterDto
+    type res = array<cardDto>
 }
 
 module CreateTranslateCard = {
@@ -74,17 +88,4 @@ module CreateTranslateCard = {
         tagIds:array<string>,
     }
     type res = unit
-}
-
-type cardFilterDto = {
-    itemsPerPage:int,
-    pageIdx:int,
-    cardIds?:array<string>,
-    // cardType:option<cardType>,
-}
-
-module FindCards = {
-    let name = "findCards"
-    type req = cardFilterDto
-    type res = array<cardDto>
 }

@@ -66,8 +66,10 @@ let makeEndpoints = (db:Sqlite.database):endpoints => {
     registerBeFunc(endpointsMap, module(Dtos.CreateTag), Dao.createTag(db, _) )
     registerBeFunc(endpointsMap, module(Dtos.UpdateTag), Dao.updateTag(db, _) )
     registerBeFunc(endpointsMap, module(Dtos.DeleteTags), Dao.deleteTags(db, _) )
-    registerBeFunc(endpointsMap, module(Dtos.CreateTranslateCard), Dao.createTranslateCard(db, _) )
     registerBeFunc(endpointsMap, module(Dtos.FindCards), Dao.findCards(db, _) )
+    registerBeFunc(endpointsMap, module(Dtos.DeleteCard), Dao.deleteCard(db, _) )
+    registerBeFunc(endpointsMap, module(Dtos.RestoreCard), Dao.restoreCard(db, _) )
+    registerBeFunc(endpointsMap, module(Dtos.CreateTranslateCard), Dao.createTranslateCard(db, _) )
     {
         execBeFunc: execBeMethod(endpointsMap, ...)
     }

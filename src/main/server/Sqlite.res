@@ -9,36 +9,48 @@ type statementCompletionInfo = {
 @send external dbPrepare: (database,string) => statement = "prepare"
 @send external dbPragma: (database, string, @as(json`{simple:true}`) _) => 'a = "pragma"
 @send external dbPragmaFull: (database,string) => array<{..}> = "pragma"
-@send external dbExec: (database,string) => database = "exec"
-@send external dbTransaction: (database,'a=>'b) => ('a=>'b) = "transaction"
+@send external dbRunScript: (database,string) => database = "exec"
+@send external dbTransactionPriv: (database,'a=>'b) => ('a=>'b) = "transaction"
 
-@send external stmtRun: (statement,'a) => statementCompletionInfo = "run"
-@send external stmtRunNp: (statement) => statementCompletionInfo = "run"
-@send external stmtAll: (statement,'a) => array<JSON.t> = "all"
-@send external stmtAllNp: (statement) => array<JSON.t> = "all"
-@send external stmtGet: (statement,'a) => JSON.t = "get"
-@send external stmtGetNp: (statement) => JSON.t = "get"
+@send external stmtUpdate: (statement,'a) => statementCompletionInfo = "run"
+@send external stmtUpdateNp: (statement) => statementCompletionInfo = "run"
+@send external stmtSelect: (statement,'a) => array<JSON.t> = "all"
+@send external stmtSelectNp: (statement) => array<JSON.t> = "all"
+@send external stmtSelectSingle: (statement,'a) => JSON.t = "get"
+@send external stmtSelectSingleNp: (statement) => JSON.t = "get"
 
-let dbRun = (db:database,query:string,params:'a):statementCompletionInfo => {
-    db->dbPrepare(query)->stmtRun(params)
+let dbUpdateInf = (db:database,query:string,params:'a):statementCompletionInfo => {
+    db->dbPrepare(query)->stmtUpdate(params)
 }
 
-let dbRunNp = (db:database,query:string):statementCompletionInfo => {
-    db->dbPrepare(query)->stmtRunNp
+let dbUpdate = (db:database,query:string,params:'a):unit => {
+    dbUpdateInf(db, query, params)->ignore
 }
 
-let dbAll = (db:database,query:string,params:'a):array<JSON.t> => {
-    db->dbPrepare(query)->stmtAll(params)
+let dbUpdateNpInf = (db:database,query:string):statementCompletionInfo => {
+    db->dbPrepare(query)->stmtUpdateNp
 }
 
-let dbAllNp = (db:database,query:string):array<JSON.t> => {
-    db->dbPrepare(query)->stmtAllNp
+let dbUpdateNp = (db:database,query:string):unit => {
+    dbUpdateNpInf(db, query)->ignore
 }
 
-let dbGet = (db:database,query:string,params:'a):JSON.t => {
-    db->dbPrepare(query)->stmtGet(params)
+let dbSelect = (db:database,query:string,params:'a):array<JSON.t> => {
+    db->dbPrepare(query)->stmtSelect(params)
 }
 
-let dbGetNp = (db:database,query:string):JSON.t => {
-    db->dbPrepare(query)->stmtGetNp
+let dbSelectNp = (db:database,query:string):array<JSON.t> => {
+    db->dbPrepare(query)->stmtSelectNp
+}
+
+let dbSelectSingle = (db:database,query:string,params:'a):JSON.t => {
+    db->dbPrepare(query)->stmtSelectSingle(params)
+}
+
+let dbSelectSingleNp = (db:database,query:string):JSON.t => {
+    db->dbPrepare(query)->stmtSelectSingleNp
+}
+
+let dbTransaction = (db:database, func:unit=>'a):'a => {
+    (db->dbTransactionPriv(func))()
 }

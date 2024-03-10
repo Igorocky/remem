@@ -1,6 +1,5 @@
 open Mui_components
 open Modal
-open Common_utils
 open Dtos
 open BE_utils
 open React_rnd_utils
@@ -16,6 +15,7 @@ let makeInitialState = ():state => {
         filter: {
             itemsPerPage:5,
             pageIdx:0,
+            deleted:false,
         },
         cards:None
     }
@@ -28,14 +28,30 @@ let setPageIdx = (st:state, pageIdx:int, cards:array<cardDto>):state => {
     }
 }
 
-let resetFilter = (st:state):state => {
+let updateCard = (st:state, cardId:string, update:cardDto=>cardDto):state => {
     {
-        filter:{...st.filter, pageIdx:0},
+        ...st,
+        cards:st.cards->Option.map(cards => cards->Array.map(card => card.id == cardId ? update(card) : card)),
+    }
+}
+
+let setDeleted = (st:state, deleted:bool):state => {
+    {
+        ...st,
+        filter:{...st.filter, deleted},
+    }
+}
+
+let resetFilter = ():state => {
+    {
+        filter:makeInitialState().filter,
         cards:None,
     }
 }
 
 let findCards:beFunc<Dtos.FindCards.req, Dtos.FindCards.res> = createBeFunc(module(Dtos.FindCards))
+let deleteCard:beFunc<Dtos.DeleteCard.req, Dtos.DeleteCard.res> = createBeFunc(module(Dtos.DeleteCard))
+let restoreCard:beFunc<Dtos.RestoreCard.req, Dtos.RestoreCard.res> = createBeFunc(module(Dtos.RestoreCard))
 
 @react.component
 let make = (
@@ -53,11 +69,27 @@ let make = (
     }
 
     let actResetFilter = () => {
-        setState(resetFilter)
+        setState(_ => resetFilter())
+    }
+
+    let actToggleIsDeletedForCard = async (card:cardDto) => {
+        let updatedCard = card.isDeleted 
+            ? await restoreCard({cardId:card.id})->getExn 
+            : await deleteCard({cardId:card.id})->getExn
+        setState(updateCard(_,card.id,_=>updatedCard))
     }
 
     let rndFilter = () => {
         <Col>
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked={state.filter.deleted->Option.getOr(false)}
+                        onChange={evt2bool(checked => setState(setDeleted(_,checked)))}
+                    />
+                }
+                label="Deleted"
+            />
             <Row>
                 <Button onClick=clickHnd(~act=() => actSearch(0)->ignore) color="primary" variant=#contained>
                     {React.string("Search")}
@@ -72,7 +104,9 @@ let make = (
     let isLastPage = () => {
         switch state.cards {
             | None => true
-            | Some(cards) => cards->Array.length < state.filter.itemsPerPage
+            | Some(cards) => {
+                state.filter.itemsPerPage->Option.mapOr(false, itemsPerPage => cards->Array.length < itemsPerPage)
+            }
         }
     }
 
@@ -82,18 +116,18 @@ let make = (
             | Some(_) => {
                 <Row>
                     <Button onClick=clickHnd(~act=() => actSearch(0)->ignore) color="grey" variant=#contained
-                        disabled={state.filter.pageIdx <= 0}
+                        disabled={state.filter.pageIdx->Option.mapOr(false, pageIdx => pageIdx <= 0)}
                     >
                         {React.string("<<")}
                     </Button>
-                    <Button onClick=clickHnd(~act=() => actSearch(state.filter.pageIdx-1)->ignore) 
+                    <Button onClick=clickHnd(~act=() => actSearch(state.filter.pageIdx->Option.getOr(0)-1)->ignore) 
                         color="grey" variant=#contained
-                        disabled={state.filter.pageIdx <= 0}
+                        disabled={state.filter.pageIdx->Option.mapOr(false, pageIdx => pageIdx <= 0)}
                     >
                         {React.string("<")}
                     </Button>
-                    {(state.filter.pageIdx+1)->Int.toString->React.string}
-                    <Button onClick=clickHnd(~act=() => actSearch(state.filter.pageIdx+1)->ignore) 
+                    {(state.filter.pageIdx->Option.getOr(0)+1)->Int.toString->React.string}
+                    <Button onClick=clickHnd(~act=() => actSearch(state.filter.pageIdx->Option.getOr(0)+1)->ignore) 
                         color="grey" variant=#contained
                         disabled={isLastPage()}
                     >
@@ -123,11 +157,18 @@ let make = (
                     <table>
                         <tbody>
                             {
-                                // cards->Array.map(rndCard)->React.array
                                 cards->Array.map(card => {
                                     <tr key=card.id>
                                         <td>{rndSmallTextBtn(~text="edit", ~color="lightgrey", ~onClick=()=>())}</td>
-                                        <td>{rndSmallTextBtn(~text="delete", ~color="lightgrey", ~onClick=()=>()->ignore)}</td>
+                                        <td>
+                                            {
+                                                rndSmallTextBtn(
+                                                    ~text=card.isDeleted ? "restore" : "delete", 
+                                                    ~color="lightgrey", 
+                                                    ~onClick=()=>actToggleIsDeletedForCard(card)->ignore
+                                                )
+                                            }
+                                        </td>
                                         <td>{rndCard(card)}</td>
                                     </tr>
                                 })->React.array

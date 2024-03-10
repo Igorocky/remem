@@ -6,6 +6,7 @@ const port = 3000
 const backend = makeBackend()
 
 app.use(express.json({limit:'10MB'}))
+app.use(express.static("ui"))
 
 app.post('/be/:funcName', async (req, res) => {
     const funcName = req.params.funcName
