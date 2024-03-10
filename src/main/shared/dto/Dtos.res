@@ -55,6 +55,18 @@ type cardDto = {
     tagIds:array<string>,
 }
 
+module DeleteCard = {
+    let name = "deleteCard"
+    type req = string
+    type res = cardDto
+}
+
+module RestoreCard = {
+    let name = "restoreCard"
+    type req = string
+    type res = cardDto
+}
+
 module CreateTranslateCard = {
     let name = "createTranslateCard"
     type req = {
