@@ -38,7 +38,9 @@ type translateCardDto = {
     foreign:string,
     tran:string,
     nfPaused:bool,
+    nfNextAccAt:float,
     fnPaused:bool,
+    fnNextAccAt:float,
 }
 
 type cardType =
@@ -89,3 +91,9 @@ module CreateTranslateCard = {
     }
     type res = unit
 }
+
+// module UpdateCard = {
+//     let name = "updateCard"
+//     type req = cardDto
+//     type res = cardDto
+// }

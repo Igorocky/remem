@@ -31,7 +31,9 @@ let makeInitialCardData = (cardType:cardType) => {
                 foreign:"",
                 tran:"",
                 nfPaused:false,
+                nfNextAccAt:0.,
                 fnPaused:false,
+                fnNextAccAt:0.,
             })
         }
     }
