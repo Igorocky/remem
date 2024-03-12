@@ -18,50 +18,55 @@ let strToCardType = (str:string):cardType => {
 }
 
 type state = {
-    cardType:cardType,
-    cardData:cardData,
-    tagIds:array<string>,
+    cardDto:cardDto,
 }
 
-let makeInitialCardData = (cardType:cardType) => {
-    switch cardType {
-        | Translate => {
-            Translate({
-                native:"",
-                foreign:"",
-                tran:"",
-                nfPaused:false,
-                nfNextAccAt:0.,
-                fnPaused:false,
-                fnNextAccAt:0.,
-            })
-        }
+let makeInitialCardDto = (cardType:cardType, ~tagIds:option<array<string>>=?) => {
+    {
+        id:"",
+        isDeleted:false,
+        crtTime:0.0,
+        tagIds:tagIds->Option.getOr([]),
+        data:
+            switch cardType {
+                | Translate => {
+                    Translate({
+                        native:"",
+                        foreign:"",
+                        tran:"",
+                        nfPaused:false,
+                        nfNextAccAt:0.,
+                        fnPaused:false,
+                        fnNextAccAt:0.,
+                    })
+                }
+            }
     }
 }
 
 let makeInitialState = () => {
     {
-        cardType:Translate,
-        cardData:makeInitialCardData(Translate),
-        tagIds:[],
+        cardDto:makeInitialCardDto(Translate),
+    }
+}
+
+let getCurrCardType = (st:state):cardType => {
+    switch st.cardDto.data {
+        | Translate(_) => Translate
     }
 }
 
 let setCardType = (st:state, newCardType:cardType):state => {
-    if (st.cardType == newCardType) {
+    if (st->getCurrCardType == newCardType) {
         st
     } else {
-        {
-            ...st,
-            cardType:newCardType,
-            cardData:makeInitialCardData(newCardType),
-        }
+        {cardDto:makeInitialCardDto(newCardType, ~tagIds=st.cardDto.tagIds)}
     }
 }
 
 let updateTranslateCardData = (st:state, upd:translateCardDto=>translateCardDto):state => {
-    switch st.cardData {
-        | Translate(data) => { ...st, cardData: Translate(data->upd) }
+    switch st.cardDto.data {
+        | Translate(data) => { cardDto: {...st.cardDto, data:Translate(data->upd) }}
     }
 }
 
@@ -78,7 +83,7 @@ let setTran = (st:state,text:string):state => {
 }
 
 let setTagIds = (st:state,tags:array<Dtos.tagDto>):state => {
-    {...st, tagIds:tags->Array.map(tag => tag.id)}
+    {cardDto:{...st.cardDto, tagIds:tags->Array.map(tag => tag.id)}}
 }
 
 let setNfPaused = (st:state,paused:bool):state => {
@@ -89,8 +94,7 @@ let setFnPaused = (st:state,paused:bool):state => {
     updateTranslateCardData(st, data => {...data, fnPaused:paused})
 }
 
-let createTranslateCard:beFunc<Dtos.CreateTranslateCard.req, Dtos.CreateTranslateCard.res> = 
-    createBeFunc(module(Dtos.CreateTranslateCard))
+let createCard:beFunc<Dtos.CreateCard.req, Dtos.CreateCard.res> = createBeFunc(module(Dtos.CreateCard))
 
 @react.component
 let make = (
@@ -184,7 +188,7 @@ let make = (
             <TagSelector
                 modalRef
                 allTags
-                initTagIds=state.tagIds
+                initTagIds=state.cardDto.tagIds
                 createTag
                 getRemainingTags
                 onChange = {tags => setState(setTagIds(_,tags))}
@@ -193,23 +197,23 @@ let make = (
     }
 
     let rndCardData = () => {
-        switch state.cardData {
+        switch state.cardDto.data {
             | Translate(data) => rndTranslateCardData(data)
         }
     }
 
     let actSave = async () => {
-        switch state.cardData {
-            | Translate(cardData) => {
-                await createTranslateCard({cardData, tagIds:state.tagIds})->getExn
-                setState(st => {
+        (await createCard(state.cardDto)->getExn)->ignore
+        setState(st => {
+            switch state.cardDto.data {
+                | Translate(cardData) => {
                     let st = st->setNative("")
                     let st = st->setForeign("")
                     let st = st->setTran("")
                     st
-                })
+                }
             }
-        }
+        })
     }
 
     let rndButtons = () => {
@@ -225,7 +229,7 @@ let make = (
             ~id="Card type", ~name="Card type", ~width=200, 
             ~onChange=str=>setState(setCardType(_,str->strToCardType)), 
             ~options=[(Translate->cardTypeToStr,"Translate")], 
-            ~value=state.cardType->cardTypeToStr,
+            ~value=state->getCurrCardType->cardTypeToStr,
         )}
         {rndCardData()}
         {rndButtons()}

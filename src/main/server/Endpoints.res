@@ -69,7 +69,7 @@ let makeEndpoints = (db:Sqlite.database):endpoints => {
     registerBeFunc(endpointsMap, module(Dtos.FindCards), Dao.findCards(db, _) )
     registerBeFunc(endpointsMap, module(Dtos.DeleteCard), Dao.deleteCard(db, _) )
     registerBeFunc(endpointsMap, module(Dtos.RestoreCard), Dao.restoreCard(db, _) )
-    registerBeFunc(endpointsMap, module(Dtos.CreateTranslateCard), Dao.createTranslateCard(db, _) )
+    registerBeFunc(endpointsMap, module(Dtos.CreateCard), Dao.createCard(db, _) )
     {
         execBeFunc: execBeMethod(endpointsMap, ...)
     }

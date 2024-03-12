@@ -9,4 +9,4 @@ let deleteTags: (database, Dtos.DeleteTags.req) => Dtos.DeleteTags.res
 let findCards: (database, Dtos.FindCards.req) => Dtos.FindCards.res
 let deleteCard: (database, Dtos.DeleteCard.req) => Dtos.DeleteCard.res
 let restoreCard: (database, Dtos.RestoreCard.req) => Dtos.RestoreCard.res
-let createTranslateCard: (database, Dtos.CreateTranslateCard.req) => Dtos.CreateTranslateCard.res
+let createCard: (database, Dtos.CreateCard.req) => Dtos.CreateCard.res

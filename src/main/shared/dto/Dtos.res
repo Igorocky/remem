@@ -53,8 +53,20 @@ type cardDto = {
     id:string,
     isDeleted:bool,
     crtTime:float,
-    data:cardData,
     tagIds:array<string>,
+    data:cardData,
+}
+
+module CreateCard = {
+    let name = "createCard"
+    type req = cardDto
+    type res = cardDto
+}
+
+module UpdateCard = {
+    let name = "updateCard"
+    type req = cardDto
+    type res = cardDto
 }
 
 module DeleteCard = {
@@ -82,18 +94,3 @@ module FindCards = {
     type req = cardFilterDto
     type res = array<cardDto>
 }
-
-module CreateTranslateCard = {
-    let name = "createTranslateCard"
-    type req = {
-        cardData:translateCardDto,
-        tagIds:array<string>,
-    }
-    type res = unit
-}
-
-// module UpdateCard = {
-//     let name = "updateCard"
-//     type req = cardDto
-//     type res = cardDto
-// }

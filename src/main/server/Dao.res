@@ -1,5 +1,6 @@
 open Sqlite
 open Json_parse
+open Dtos
 
 module S = DB_schema_v1
 
@@ -148,30 +149,71 @@ let restoreCard = (db:database, req:Dtos.RestoreCard.req):Dtos.RestoreCard.res =
 }
 
 let insertCardQuery = `insert into ${S.card}(${S.card_type}) values (:card_type)`
+let insertCardToTagQuery = `insert into ${S.cardToTag}
+    (${S.cardToTag_cardId}, ${S.cardToTag_tagId}) values (:cardId, :tagId)`
 let insertTranslateCardQuery = `insert into ${S.cardTr}
     (${S.cardTr_id}, ${S.cardTr_native}, ${S.cardTr_foreign}, ${S.cardTr_tran}) 
     values (:cardId, :native, :foreign, :tran)`
-let insertCardToTagQuery = `insert into ${S.cardToTag}
-    (${S.cardToTag_cardId}, ${S.cardToTag_tagId}) values (:cardId, :tagId)`
-let pauseTaskQuery = `update ${S.taskSch}
-    set ${S.taskSch_paused} = 1 where ${S.taskSch_cardId} = :cardId and ${S.taskSch_taskType} = :taskType`
-let createTranslateCard = (db:database, req:Dtos.CreateTranslateCard.req):Dtos.CreateTranslateCard.res => {
-    let cardData = req.cardData
+let updateTaskPausedQuery = `update ${S.taskSch}
+    set ${S.taskSch_paused} = :paused where ${S.taskSch_cardId} = :cardId and ${S.taskSch_taskType} = :taskType`
+let createCard = (db:database, req:Dtos.CreateCard.req):Dtos.CreateCard.res => {
     dbTransaction(db, () => {
         db->dbUpdate( insertCardQuery, {"card_type":S.cardType_Translate->Int.fromString} )->ignore
         let cardId = db->dbSelectSingleNp("SELECT last_insert_rowid()||'' id")->fromJsonExn(toObj(_, str(_, "id")))
-        db->dbUpdate(
-            insertTranslateCardQuery, 
-            {"cardId":cardId,"native":cardData.native,"foreign":cardData.foreign,"tran":cardData.tran}
-        )->ignore
-        req.tagIds->Array.forEach(tagId => {
+        req.tagIds->Belt_HashSetString.fromArray->Belt_HashSetString.forEach(tagId => {
             db->dbUpdate(insertCardToTagQuery, {"cardId":cardId,"tagId":tagId})->ignore
         })
-        if (cardData.nfPaused) {
-            db->dbUpdate(pauseTaskQuery, {"cardId":cardId,"taskType":S.taskType_TranslateNf})->ignore
+        switch req.data {
+            | Translate(cardData) => {
+                db->dbUpdate(
+                    insertTranslateCardQuery, 
+                    {"cardId":cardId,"native":cardData.native,"foreign":cardData.foreign,"tran":cardData.tran}
+                )->ignore
+                if (cardData.nfPaused) {
+                    db->dbUpdate(updateTaskPausedQuery, 
+                        {"cardId":cardId,"taskType":S.taskType_TranslateNf, "paused":1})->ignore
+                }
+                if (cardData.fnPaused) {
+                    db->dbUpdate(updateTaskPausedQuery, 
+                        {"cardId":cardId,"taskType":S.taskType_TranslateFn, "paused":1})->ignore
+                }
+            }
         }
-        if (cardData.fnPaused) {
-            db->dbUpdate(pauseTaskQuery, {"cardId":cardId,"taskType":S.taskType_TranslateFn})->ignore
+        db->findCards({ cardIds:[cardId] })->Array.getUnsafe(0)
+    })
+}
+
+let tagsAreEqual = (a:cardDto, b:cardDto):bool => {
+    a.tagIds->Array.every(t => b.tagIds->Array.includes(t)) && b.tagIds->Array.every(t => a.tagIds->Array.includes(t))
+}
+
+let deleteCardToTagQuery = `delete from ${S.cardToTag} where ${S.cardToTag_cardId} = :cardId`
+let updateTranslateCardQuery = `update ${S.cardTr}
+    set ${S.cardTr_native} = :native, ${S.cardTr_foreign} = :foreign, ${S.cardTr_tran} = :tran
+    where ${S.cardTr_id} = :cardId`
+let updateCard = (db:database, req:Dtos.UpdateCard.req):Dtos.UpdateCard.res => {
+    dbTransaction(db, () => {
+        let newCard = req
+        let cardId = newCard.id
+        let currCard = db->findCards({ cardIds:[cardId] })->Array.getUnsafe(0)
+        if (!(tagsAreEqual(currCard, newCard))) {
+            db->dbUpdate(deleteCardToTagQuery, {"cardId":cardId})->ignore
+            newCard.tagIds->Belt_HashSetString.fromArray->Belt_HashSetString.forEach(tagId => {
+                db->dbUpdate(insertCardToTagQuery, {"cardId":cardId,"tagId":tagId})->ignore
+            })
         }
+        switch newCard.data {
+            | Translate(cardData) => {
+                db->dbUpdate(
+                    updateTranslateCardQuery, 
+                    {"cardId":cardId,"native":cardData.native,"foreign":cardData.foreign,"tran":cardData.tran}
+                )->ignore
+                db->dbUpdate(updateTaskPausedQuery,
+                    {"cardId":cardId,"taskType":S.taskType_TranslateNf, "paused":cardData.nfPaused?1:0})->ignore
+                db->dbUpdate(updateTaskPausedQuery,
+                    {"cardId":cardId,"taskType":S.taskType_TranslateFn, "paused":cardData.fnPaused?1:0})->ignore
+            }
+        }
+        db->findCards({ cardIds:[cardId] })->Array.getUnsafe(0)
     })
 }
