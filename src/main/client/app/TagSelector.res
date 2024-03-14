@@ -76,6 +76,7 @@ let make = (
     ~createTag:tagDto=>promise<result<tagDto,string>>,
     ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
     ~onChange: array<Dtos.tagDto> => unit,
+    ~bkgColor:option<string>=?,
 ) => {
     let (state, setState) = React.useState(() => makeInitialState(~allTags, ~initTags, ~initTagIds))
 
@@ -164,7 +165,7 @@ let make = (
         </Row>
     }
 
-    <Paper style=ReactDOM.Style.make(~padding="5px", ())>
+    <Paper style=ReactDOM.Style.make(~padding="5px", ~backgroundColor=?bkgColor, ())>
         <Col>
             {rndSelectedTags()}
             {rndFilter()}

@@ -10,3 +10,4 @@ let findCards: (database, Dtos.FindCards.req) => Dtos.FindCards.res
 let deleteCard: (database, Dtos.DeleteCard.req) => Dtos.DeleteCard.res
 let restoreCard: (database, Dtos.RestoreCard.req) => Dtos.RestoreCard.res
 let createCard: (database, Dtos.CreateCard.req) => Dtos.CreateCard.res
+let updateCard: (database, Dtos.UpdateCard.req) => Dtos.UpdateCard.res

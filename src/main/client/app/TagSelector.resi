@@ -7,4 +7,5 @@ let make: (
   ~createTag: Dtos.tagDto => promise<result<Dtos.tagDto, string>>,
   ~getRemainingTags: array<Dtos.tagDto> => promise<result<array<Dtos.tagDto>, string>>,
   ~onChange: array<Dtos.tagDto> => unit,
+  ~bkgColor:string=?,
 ) => React.element

@@ -57,8 +57,8 @@ let make = () => {
         updateTabs(st => {
             if (st->UseTabs.getTabs->Array.length == 0) {
                 let (st, _) = st->UseTabs.addTab(~label="Tags", ~closable=false, ~data=Tags)
-                let (st, _) = st->UseTabs.addTab(~label="Search", ~closable=false, ~data=Search)
-                let (st, _) = st->UseTabs.addTab(~label="Add card", ~closable=false, ~data=MakeCard, ~doOpen=true)
+                let (st, _) = st->UseTabs.addTab(~label="Search", ~closable=false, ~data=Search, ~doOpen=true)
+                let (st, _) = st->UseTabs.addTab(~label="Add card", ~closable=false, ~data=MakeCard)
                 st
             } else {
                 st
@@ -105,10 +105,11 @@ let make = () => {
                             modalRef 
                             allTags 
                             createTag=actCreateTag
+                            getRemainingTags=getRemainingTagsSimple(allTags,_)
                         />
                     }
                     | MakeCard => {
-                        <Cmp_make_card 
+                        <Cmp_card 
                             modalRef 
                             allTags 
                             createTag=actCreateTag

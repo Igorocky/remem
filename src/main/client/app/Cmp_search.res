@@ -17,12 +17,13 @@ let makeInitialState = ():state => {
             pageIdx:0,
             deleted:false,
         },
-        cards:None
+        cards:None,
     }
 }
 
 let setPageIdx = (st:state, pageIdx:int, cards:array<cardDto>):state => {
     {
+        ...st,
         filter:{...st.filter, pageIdx},
         cards:Some(cards),
     }
@@ -42,7 +43,7 @@ let setDeleted = (st:state, deleted:bool):state => {
     }
 }
 
-let resetFilter = ():state => {
+let resetFilter = (st:state):state => {
     {
         filter:makeInitialState().filter,
         cards:None,
@@ -58,6 +59,7 @@ let make = (
     ~modalRef:modalRef,
     ~allTags:array<Dtos.tagDto>,
     ~createTag: Dtos.tagDto => promise<result<Dtos.tagDto, string>>,
+    ~getRemainingTags:array<Dtos.tagDto>=>promise<result<array<Dtos.tagDto>,string>>,
 ) => {
     let (state, setState) = React.useState(makeInitialState)
 
@@ -69,7 +71,7 @@ let make = (
     }
 
     let actResetFilter = () => {
-        setState(_ => resetFilter())
+        setState(resetFilter)
     }
 
     let actToggleIsDeletedForCard = async (card:cardDto) => {
@@ -77,6 +79,25 @@ let make = (
             ? await restoreCard({cardId:card.id})->getExn 
             : await deleteCard({cardId:card.id})->getExn
         setState(updateCard(_,card.id,_=>updatedCard))
+    }
+
+    let actEdit = (cardDto:cardDto) => {
+        openModal(modalRef, modalId => {
+            <Paper style=ReactDOM.Style.make(~padding="10px", ())>
+                <Cmp_card 
+                    modalRef 
+                    allTags 
+                    createTag
+                    getRemainingTags
+                    cardDto=cardDto
+                    onSaved={updatedCard => {
+                        setState(updateCard(_,cardDto.id,_=>updatedCard))
+                        closeModal(modalRef, modalId)
+                    }}
+                    onCancel={() => closeModal(modalRef, modalId)}
+                />
+            </Paper>
+        })
     }
 
     let rndFilter = () => {
@@ -159,7 +180,13 @@ let make = (
                             {
                                 cards->Array.map(card => {
                                     <tr key=card.id>
-                                        <td>{rndSmallTextBtn(~text="edit", ~color="lightgrey", ~onClick=()=>())}</td>
+                                        <td>
+                                            {
+                                                rndSmallTextBtn(
+                                                    ~text="edit", ~color="lightgrey", ~onClick=()=>actEdit(card)
+                                                )
+                                            }
+                                        </td>
                                         <td>
                                             {
                                                 rndSmallTextBtn(
