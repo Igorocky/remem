@@ -5,6 +5,15 @@ type backend = {
 let makeBackend = ():backend => {
     let db = Sqlite.makeDatabase("./remem.sqlite", ~options={"verbose": Console.log})
     Dao.initDatabase(db)
+    let allTags = db->Dao.getAllTags
+    if (allTags.tags->Array.length == 0) {
+        db->Dao.fillDbWithRandomData(
+            ~numOfTags=50,
+            ~numOfCardsOfEachType=1000,
+            ~minNumOfTagsPerCard=0,
+            ~maxNumOfTagsPerCard=4,
+        )
+    }
     let endpoints = Endpoints.makeEndpoints(db)
     {
         execBeFunc: endpoints.execBeFunc

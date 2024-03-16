@@ -11,3 +11,11 @@ let deleteCard: (database, Dtos.DeleteCard.req) => Dtos.DeleteCard.res
 let restoreCard: (database, Dtos.RestoreCard.req) => Dtos.RestoreCard.res
 let createCard: (database, Dtos.CreateCard.req) => Dtos.CreateCard.res
 let updateCard: (database, Dtos.UpdateCard.req) => Dtos.UpdateCard.res
+
+let fillDbWithRandomData: (
+    database,
+    ~numOfTags:int,
+    ~numOfCardsOfEachType:int,
+    ~minNumOfTagsPerCard:int,
+    ~maxNumOfTagsPerCard:int,
+) => unit

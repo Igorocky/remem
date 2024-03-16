@@ -13,7 +13,7 @@ type state = {
 let makeInitialState = ():state => {
     {
         filter: {
-            itemsPerPage:5,
+            itemsPerPage:50,
             pageIdx:0,
             deleted:false,
         },
@@ -23,7 +23,6 @@ let makeInitialState = ():state => {
 
 let setPageIdx = (st:state, pageIdx:int, cards:array<cardDto>):state => {
     {
-        ...st,
         filter:{...st.filter, pageIdx},
         cards:Some(cards),
     }

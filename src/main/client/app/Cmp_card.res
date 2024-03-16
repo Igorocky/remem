@@ -229,15 +229,6 @@ let make = (
                 label="pause Foreign -> Native"
                 style=ReactDOM.Style.make(~backgroundColor=?getBkgColor(initFnPaused,fnPaused), ())
             />
-            <TagSelector
-                modalRef
-                allTags
-                initTagIds=state.cardDto.tagIds
-                createTag
-                getRemainingTags
-                onChange = {tags => setState(setTagIds(_,tags))}
-                bkgColor=?(areTagsChanged()?Some("yellow"):None)
-            />
         </Col>
     }
 
@@ -323,6 +314,15 @@ let make = (
             ~disabled=cardDto->Option.isSome,
         )}
         {rndCardData()}
+        <TagSelector
+            modalRef
+            allTags
+            initTagIds=state.cardDto.tagIds
+            createTag
+            getRemainingTags
+            onChange = {tags => setState(setTagIds(_,tags))}
+            bkgColor=?(areTagsChanged()?Some("yellow"):None)
+        />
         {rndButtons()}
     </Col>
 }

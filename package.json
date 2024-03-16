@@ -8,6 +8,7 @@
     "res:clean": "rescript clean",
     "res:dev": "rescript -w",
     "test": "rescript && mocha src/**/test/**/*_test.res.mjs",
+    "test-single": "rescript && mocha --timeout 10000000 -g \"'put_test_name_here'\" src/**/test/**/*_test.res.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

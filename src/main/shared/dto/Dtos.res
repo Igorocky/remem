@@ -33,6 +33,14 @@ module DeleteTags = {
     type res = GetAllTags.res
 }
 
+module GetRemainingTags = {
+    let name = "getRemainingTags"
+    type req = {
+        selectedTagIds: array<string>
+    }
+    type res = array<tagDto>
+}
+
 type translateCardDto = {
     native:string,
     foreign:string,

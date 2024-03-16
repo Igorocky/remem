@@ -4,28 +4,6 @@ open Dtos
 
 module S = DB_schema_v1
 
-let initDatabase = (db:database) => {
-    db->dbPragma("foreign_keys = ON")->ignore
-    switch db->dbPragma("foreign_keys") {
-        | 1 => ()
-        | _ => Js.Exn.raiseError(`Unable to set foreign_keys = ON`)
-    }
-    switch db->dbPragma("user_version") {
-        | 0 => {
-            //Console.log2("S.schemaScript", S.schemaScript)
-            db->dbRunScript(S.schemaScript)->ignore
-            db->dbPragma(`user_version = ${S.version->Int.toString}`)
-        }
-        | actualSchemaVersion => {
-            if (actualSchemaVersion != S.version) {
-                Js.Exn.raiseError(
-                    `actualSchemaVersion ${actualSchemaVersion->Int.toString} != ${S.version->Int.toString}`
-                )
-            }
-        }
-    }
-}
-
 let getAllTagsQuery = `select ${S.tag_id}||'' id, ${S.tag_name} name from ${S.tag} order by ${S.tag_name}`
 let getAllTags = (db:database):Dtos.GetAllTags.res => {
     {
@@ -216,4 +194,76 @@ let updateCard = (db:database, req:Dtos.UpdateCard.req):Dtos.UpdateCard.res => {
         }
         db->findCards({ cardIds:[cardId] })->Array.getUnsafe(0)
     })
+}
+
+let fillDbWithRandomData = (
+    db:database,
+    ~numOfTags:int,
+    ~numOfCardsOfEachType:int,
+    ~minNumOfTagsPerCard:int,
+    ~maxNumOfTagsPerCard:int,
+):unit => {
+    let tags = []
+    for _ in 1 to numOfTags {
+        let tag = ref(Random.randText(
+            ~minLen=3,
+            ~maxLen=5,
+            ~spaceProb=0,
+            ~digitProb=0,
+        ))
+        while (tags->Array.includes(tag.contents)) {
+            tag := Random.randText(
+                ~minLen=3,
+                ~maxLen=5,
+            )
+        }
+        tags->Array.push(tag.contents)
+    }
+    tags->Array.forEach(tag => db->createTag({name:tag})->ignore)
+    let allTagIds = (db->getAllTags).tags->Array.map(tag => tag.id)
+    for _ in 1 to numOfCardsOfEachType {
+        let card = db->createCard({
+            {
+                id:"",
+                isDeleted:false,
+                crtTime:0.0,
+                tagIds:Array.make(~length=Js.Math.random_int(minNumOfTagsPerCard,maxNumOfTagsPerCard), "")
+                    ->Array.map(_ => allTagIds->Array.getUnsafe(Js.Math.random_int(0,allTagIds->Array.length))),
+                data: Translate({
+                    native:Random.randText(~minLen=5, ~maxLen=10, ~digitProb=0, ~spaceProb=0)->String.toUpperCase,
+                    foreign:Random.randText(~minLen=5, ~maxLen=10, ~digitProb=0, ~spaceProb=0),
+                    tran:"[" ++ Random.randText(~minLen=5, ~maxLen=10, ~digitProb=0, ~spaceProb=0) ++ "]",
+                    nfPaused:Js.Math.random() < 0.5,
+                    nfNextAccAt:Date.now(),
+                    fnPaused:Js.Math.random() < 0.5,
+                    fnNextAccAt:Date.now(),
+                }),
+            }
+        })
+        if (Js.Math.random() < 0.1) {
+            db->deleteCard({cardId:card.id})->ignore
+        }
+    }
+}
+
+let initDatabase = (db:database) => {
+    db->dbPragma("foreign_keys = ON")->ignore
+    switch db->dbPragma("foreign_keys") {
+        | 1 => ()
+        | _ => Js.Exn.raiseError(`Unable to set foreign_keys = ON`)
+    }
+    switch db->dbPragma("user_version") {
+        | 0 => {
+            //Console.log2("S.schemaScript", S.schemaScript)
+            db->dbRunScript(S.schemaScript)->ignore
+            db->dbPragma(`user_version = ${S.version->Int.toString}`)
+        }
+        | actualSchemaVersion => {
+            if (actualSchemaVersion != S.version) {
+                Js.Exn.raiseError(
+                    `actualSchemaVersion ${actualSchemaVersion->Int.toString} != ${S.version->Int.toString}`
+                )
+            }
+        }
+    }
 }
