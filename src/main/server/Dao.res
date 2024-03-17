@@ -153,7 +153,7 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
         from
             ${S.card} C
             left join ${S.cardToTag} CT on C.${S.card_id} = CT.${S.cardToTag_cardId}
-            left join ${S.cardTr} TR on C.${S.card_id} = TR.${S.cardTr_id}
+            left join ${S.cardTr} TR on C.${S.card_id} = TR.${S.cardTr_cardId}
             left join ${S.task} S on C.${S.card_id} = S.${S.task_cardId}
             ${tagJoins}
         where ${where->Array.joinWith(" and ")}
@@ -209,7 +209,7 @@ let insertCardQuery = `insert into ${S.card}(${S.card_type},${S.card_extId}) val
 let insertCardToTagQuery = `insert into ${S.cardToTag}
     (${S.cardToTag_cardId}, ${S.cardToTag_tagId}) values (:cardId, :tagId)`
 let insertTranslateCardQuery = `insert into ${S.cardTr}
-    (${S.cardTr_id}, ${S.cardTr_native}, ${S.cardTr_foreign}, ${S.cardTr_tran}) 
+    (${S.cardTr_cardId}, ${S.cardTr_native}, ${S.cardTr_foreign}, ${S.cardTr_tran}) 
     values (:cardId, :native, :foreign, :tran)`
 let updateTaskPausedQuery = `update ${S.task}
     set ${S.task_paused} = :paused where ${S.task_cardId} = :cardId and ${S.task_typeId} = :typeId`
@@ -248,7 +248,7 @@ let tagsAreEqual = (a:cardDto, b:cardDto):bool => {
 let deleteCardToTagQuery = `delete from ${S.cardToTag} where ${S.cardToTag_cardId} = :cardId`
 let updateTranslateCardQuery = `update ${S.cardTr}
     set ${S.cardTr_native} = :native, ${S.cardTr_foreign} = :foreign, ${S.cardTr_tran} = :tran
-    where ${S.cardTr_id} = :cardId`
+    where ${S.cardTr_cardId} = :cardId`
 let updateCard = (db:database, req:UpdateCard.req):UpdateCard.res => {
     dbTransaction(db, () => {
         let newCard = req

@@ -30,12 +30,6 @@ let cardToTag: string
 let cardToTag_cardId: string
 let cardToTag_tagId: string
 
-let cardTr: string
-let cardTr_id: string
-let cardTr_native: string
-let cardTr_foreign: string
-let cardTr_tran: string
-
 let task: string
 let task_id: string
 let task_cardId: string
@@ -47,3 +41,19 @@ let taskHist_taskId: string
 let taskHist_time: string
 let taskHist_mark: string
 let taskHist_note: string
+
+/* #################### CARD_TRANSLATE ####################################### */
+
+let cardTr: string
+let cardTr_cardId: string
+let cardTr_native: string
+let cardTr_foreign: string
+let cardTr_tran: string
+
+let cardTrChg: string
+let cardTrChg_time: string
+let cardTrChg_id: string
+let cardTrChg_extId: string
+let cardTrChg_native: string
+let cardTrChg_foreign: string
+let cardTrChg_tran: string

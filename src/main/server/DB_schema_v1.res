@@ -85,21 +85,6 @@ saveScript(`
     create index cardToTag_idx2 on ${cardToTag}(${cardToTag_cardId},${cardToTag_tagId});
 `)
 
-let cardTr = "CARD_TRANSLATE"
-let cardTr_id = "CARD_ID"
-let cardTr_native = "NATIVE"
-let cardTr_foreign = "FOREIGN_"
-let cardTr_tran = "TRANSCRIPTION"
-
-saveScript(`
-    create table ${cardTr} (
-        ${cardTr_id} integer unique references ${card}(${card_id}) ON DELETE CASCADE ON UPDATE CASCADE,
-        ${cardTr_native} text not null default '',
-        ${cardTr_foreign} text not null default '',
-        ${cardTr_tran} text not null default ''
-    ) strict;
-`)
-
 let task = "TASK"
 let task_id = "ID"
 let task_cardId = "CARD_ID"
@@ -142,6 +127,71 @@ saveScript(`
         ${taskHist_mark} real not null check (0 <= ${taskHist_mark} and ${taskHist_mark} <= 1),
         ${taskHist_note} text not null default ''
     ) strict;
+`)
+
+/* #################### CARD_TRANSLATE ####################################### */
+
+let cardTr = "CARD_TRANSLATE"
+let cardTr_cardId = "CARD_ID"
+let cardTr_native = "NATIVE"
+let cardTr_foreign = "FOREIGN_"
+let cardTr_tran = "TRANSCRIPTION"
+
+saveScript(`
+    create table ${cardTr} (
+        ${cardTr_cardId} integer unique references ${card}(${card_id}) ON DELETE CASCADE ON UPDATE CASCADE,
+        ${cardTr_native} text not null default '',
+        ${cardTr_foreign} text not null default '',
+        ${cardTr_tran} text not null default ''
+    ) strict;
+`)
+
+let cardTrChg = "CARD_TRANSLATE_CHG"
+let cardTrChg_time = "TIME"
+let cardTrChg_id = "CARD_ID"
+let cardTrChg_extId = "CARD_EXT_ID"
+let cardTrChg_native = "NATIVE"
+let cardTrChg_foreign = "FOREIGN_"
+let cardTrChg_tran = "TRANSCRIPTION"
+
+saveScript(`
+    create table ${cardTrChg} (
+        ${cardTrChg_time} real not null default ( unixepoch() * 1000 ),
+        ${cardTrChg_id} integer not null,
+        ${cardTrChg_extId} text not null,
+        ${cardTrChg_native} text not null,
+        ${cardTrChg_foreign} text not null,
+        ${cardTrChg_tran} text not null
+    ) strict;
+`)
+let cardTrChgTriggerBody = `
+    begin
+        insert into ${cardTrChg} (
+            ${cardTrChg_id},
+            ${cardTrChg_extId},
+            ${cardTrChg_native},
+            ${cardTrChg_foreign},
+            ${cardTrChg_tran}
+        ) values (
+            /* ${cardTrChg_id} */ new.${cardTr_cardId},
+            /* ${cardTrChg_extId} */ (select ${card_extId} from ${card} where ${card_id} = new.${cardTr_cardId}),
+            /* ${cardTrChg_native} */ new.${cardTr_native},
+            /* ${cardTrChg_foreign} */ new.${cardTr_foreign},
+            /* ${cardTrChg_tran} */ new.${cardTr_tran}
+        );
+    end;
+`
+saveScript(`
+    create trigger save_chg_hist_for_card_translate_ins after insert on ${cardTr} for each row 
+    ${cardTrChgTriggerBody}
+`)
+saveScript(`
+    create trigger save_chg_hist_for_card_translate_upd after update on ${cardTr} for each row 
+    when 
+        old.${cardTr_native} <> new.${cardTr_native}
+        or old.${cardTr_foreign} <> new.${cardTr_foreign}
+        or old.${cardTr_tran} <> new.${cardTr_tran}
+    ${cardTrChgTriggerBody}
 `)
 
 let schemaScript = schemaScripts->Array.joinWith("\n\n")
