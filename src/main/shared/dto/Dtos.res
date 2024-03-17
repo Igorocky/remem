@@ -96,6 +96,7 @@ type cardFilterDto = {
     deleted?:bool,
     cardIds?:array<string>,
     tagIds?:array<string>,
+    withoutTags?:bool,
     // cardType:option<cardType>,
 }
 

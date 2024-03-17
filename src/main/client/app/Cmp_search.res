@@ -17,6 +17,7 @@ let makeInitialState = ():state => {
             pageIdx:0,
             deleted:false,
             tagIds: [],
+            withoutTags: false,
         },
         cards:None,
     }
@@ -51,6 +52,13 @@ let setDeleted = (st:state, deleted:bool):state => {
             ...st,
             filter:{...st.filter, deleted, tagIds:[]},
         }
+    }
+}
+
+let setWithoutTags = (st:state, withoutTags:bool):state => {
+    {
+        ...st,
+        filter:{...st.filter, withoutTags},
     }
 }
 
@@ -127,13 +135,28 @@ let make = (
 
     let rndFilter = () => {
         <Col>
-            <TagSelector
-                modalRef
-                allTags
-                createTag
-                getRemainingTags=getRemainingTags(state.filter.deleted->Option.getOr(false), _)
-                onChange = {tags => setState(setSelectedTags(_,tags))}
-                resetSelectedTags
+            {
+                if (!(state.filter.withoutTags->Option.getOr(false))) {
+                    <TagSelector
+                        modalRef
+                        allTags
+                        createTag
+                        getRemainingTags=getRemainingTags(state.filter.deleted->Option.getOr(false), _)
+                        onChange = {tags => setState(setSelectedTags(_,tags))}
+                        resetSelectedTags
+                    />
+                } else {
+                    React.null
+                }
+            }
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked={state.filter.withoutTags->Option.getOr(false)}
+                        onChange={evt2bool(checked => setState(setWithoutTags(_,checked)))}
+                    />
+                }
+                label="Cards without tags"
             />
             <FormControlLabel
                 control={

@@ -124,7 +124,7 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
             params->Dict.set(paramName, paramValue)
             listOfParams->Array.push(":" ++ paramName)
         })
-        where->Array.push(`( C.${S.card_id} in (` ++ listOfParams->Array.joinWith(", ") ++ ") )")
+        where->Array.push(`( C.${S.card_id} in (${listOfParams->Array.joinWith(", ")}) )`)
     })
     let (tagJoins,tagParams) = filter.tagIds->Option.map(tagIds => makeJoinsForTagFilter(
         ~cardTableAlias="C", 
@@ -133,6 +133,9 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
         ~tagIds,
     ))->Option.getOr(("", Dict.make()))
     tagParams->Dict.toArray->Array.forEach(((k,v)) => params->Dict.set(k,v->JSON.Encode.string))
+    if (filter.withoutTags->Option.getOr(false)) {
+        where->Array.push(`( CT.${S.cardToTag_tagId} is null )`)
+    }
     let query = `
     select * from (
         select
@@ -141,24 +144,25 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
             C.${S.card_deleted} card_deleted, 
             C.${S.card_crtTime} card_crt_time, 
             C.${S.card_type}||'' card_type,
-            group_concat(distinct ':'||T.${S.cardToTag_tagId}||':') tag_ids,
-            max(CT.${S.cardTr_native}) tr_native, 
-            max(CT.${S.cardTr_foreign}) tr_foreign, 
-            max(CT.${S.cardTr_tran}) tr_tran,
+            group_concat(distinct ':'||CT.${S.cardToTag_tagId}||':') tag_ids,
+            max(TR.${S.cardTr_native}) tr_native, 
+            max(TR.${S.cardTr_foreign}) tr_foreign, 
+            max(TR.${S.cardTr_tran}) tr_tran,
             max(case when S.${S.taskSch_taskType} = ${S.taskType_TranslateNf} then S.${S.taskSch_paused} else 0 end)    tr_nf_paused,
             max(case when S.${S.taskSch_taskType} = ${S.taskType_TranslateNf} then S.${S.taskSch_nextAccAt} else 0 end) tr_nf_next_acc_at,
             max(case when S.${S.taskSch_taskType} = ${S.taskType_TranslateFn} then S.${S.taskSch_paused} else 0 end)    tr_fn_paused,
             max(case when S.${S.taskSch_taskType} = ${S.taskType_TranslateFn} then S.${S.taskSch_nextAccAt} else 0 end)    tr_fn_next_acc_at
         from
             ${S.card} C
-            left join ${S.cardToTag} T on C.${S.card_id} = T.${S.cardToTag_cardId}
-            left join ${S.cardTr} CT on C.${S.card_id} = CT.${S.cardTr_id}
+            left join ${S.cardToTag} CT on C.${S.card_id} = CT.${S.cardToTag_cardId}
+            left join ${S.cardTr} TR on C.${S.card_id} = TR.${S.cardTr_id}
             left join ${S.taskSch} S on C.${S.card_id} = S.${S.taskSch_cardId}
             ${tagJoins}
         where ${where->Array.joinWith(" and ")}
         group by C.${S.card_id}, C.${S.card_deleted}, C.${S.card_crtTime}
         order by C.${S.card_crtTime}
     ) where page_idx = ${filter.pageIdx->Option.getOr(0)->Int.toString}
+    order by card_crt_time
     `
     (query,params)
 }
