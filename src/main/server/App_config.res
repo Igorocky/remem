@@ -9,9 +9,9 @@ let makeBackend = ():backend => {
     if (allTags.tags->Array.length == 0) {
         db->Dao.fillDbWithRandomData(
             ~numOfTags=50,
-            ~numOfCardsOfEachType=1000,
+            ~numOfCardsOfEachType=10_000,
             ~minNumOfTagsPerCard=0,
-            ~maxNumOfTagsPerCard=4,
+            ~maxNumOfTagsPerCard=10,
         )
     }
     let endpoints = Endpoints.makeEndpoints(db)

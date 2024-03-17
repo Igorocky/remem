@@ -1,16 +1,19 @@
 open Sqlite
+open Dtos
 
 let initDatabase: database => unit
 
-let getAllTags: database => Dtos.GetAllTags.res
-let createTag: (database, Dtos.CreateTag.req) => Dtos.CreateTag.res
-let updateTag: (database, Dtos.UpdateTag.req) => Dtos.UpdateTag.res
-let deleteTags: (database, Dtos.DeleteTags.req) => Dtos.DeleteTags.res
-let findCards: (database, Dtos.FindCards.req) => Dtos.FindCards.res
-let deleteCard: (database, Dtos.DeleteCard.req) => Dtos.DeleteCard.res
-let restoreCard: (database, Dtos.RestoreCard.req) => Dtos.RestoreCard.res
-let createCard: (database, Dtos.CreateCard.req) => Dtos.CreateCard.res
-let updateCard: (database, Dtos.UpdateCard.req) => Dtos.UpdateCard.res
+let getAllTags: database => GetAllTags.res
+let createTag: (database, CreateTag.req) => CreateTag.res
+let updateTag: (database, UpdateTag.req) => UpdateTag.res
+let deleteTags: (database, DeleteTags.req) => DeleteTags.res
+let getRemainingTags: (database, GetRemainingTags.req) => GetRemainingTags.res
+
+let findCards: (database, FindCards.req) => FindCards.res
+let deleteCard: (database, DeleteCard.req) => DeleteCard.res
+let restoreCard: (database, RestoreCard.req) => RestoreCard.res
+let createCard: (database, CreateCard.req) => CreateCard.res
+let updateCard: (database, UpdateCard.req) => UpdateCard.res
 
 let fillDbWithRandomData: (
     database,

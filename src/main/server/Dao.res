@@ -4,30 +4,34 @@ open Dtos
 
 module S = DB_schema_v1
 
+let mapResultsOfSelect = (rows:array<JSON.t>, mapper:Json_parse.jsonObj=>'a):array<'a> => {
+    rows->Array.map(jsonAnyFromJson)->Array.map(toObj(_, mapper))
+}
+
 let getAllTagsQuery = `select ${S.tag_id}||'' id, ${S.tag_name} name from ${S.tag} order by ${S.tag_name}`
-let getAllTags = (db:database):Dtos.GetAllTags.res => {
+let getAllTags = (db:database):GetAllTags.res => {
     {
-        Dtos.GetAllTags.tags:
+        GetAllTags.tags:
             db->dbSelectNp(getAllTagsQuery)->Array.map(fromJsonExn(_,toObj(_, o => {
-                Dtos.id: o->str("id"),
+                id: o->str("id"),
                 name: o->str("name"),
             })))
     }
 }
 
 let insertTagQuery = `insert into ${S.tag}(${S.tag_name}) values (:name)`
-let createTag = (db:database, req:Dtos.CreateTag.req):Dtos.CreateTag.res => {
+let createTag = (db:database, req:CreateTag.req):CreateTag.res => {
     db->dbUpdate(insertTagQuery, req)
     getAllTags(db)
 }
 
 let updateTagQuery = `update ${S.tag} set ${S.tag_name} = :name where ${S.tag_id} = :id`
-let updateTag = (db:database, req:Dtos.UpdateTag.req):Dtos.UpdateTag.res => {
+let updateTag = (db:database, req:UpdateTag.req):UpdateTag.res => {
     db->dbUpdate(updateTagQuery, req)
     getAllTags(db)
 }
 
-let deleteTags = (db:database, req:Dtos.DeleteTags.req):Dtos.DeleteTags.res => {
+let deleteTags = (db:database, req:DeleteTags.req):DeleteTags.res => {
     db->dbUpdate(
         `delete from ${S.tag} where ${S.tag_id} in (`
             ++ Array.make(~length=req.ids->Array.length, "?")->Array.joinWith(",")
@@ -37,7 +41,51 @@ let deleteTags = (db:database, req:Dtos.DeleteTags.req):Dtos.DeleteTags.res => {
     getAllTags(db)
 }
 
-let makeFindCardsQuery = (filter:Dtos.cardFilterDto):(string,Dict.t<JSON.t>) => {
+let getRemainingTags = (db:database, req:GetRemainingTags.req):GetRemainingTags.res => {
+    let selectedTagIds = req.selectedTagIds
+    if (selectedTagIds->Array.length == 0) {
+        getAllTags(db).tags
+    } else {
+        let selectedTagIds = selectedTagIds->Belt_HashSetString.fromArray->Belt_HashSetString.toArray
+        let paramNames = Belt_Array.range(1,selectedTagIds->Array.length)->Array.map(i => `:tagId${i->Int.toString}`)
+        let joins = []
+        for i in 1 to paramNames->Array.length-1 {
+            let idx = Int.toString(i + 1)
+            joins->Array.push(
+                `inner join ${S.cardToTag} ct${idx} 
+                    on ct1.${S.cardToTag_cardId} = ct${idx}.${S.cardToTag_cardId} 
+                        and ct2.${S.cardToTag_tagId} = ${paramNames->Array.getUnsafe(i)}`
+            )
+        }
+        let query = `
+            select t.${S.tag_id}||'' id, t.${S.tag_name} name
+            from ${S.tag} t
+            where
+                t.${S.tag_id} not in (${paramNames->Array.joinWith(",")})
+                and t.${S.tag_id} in (
+                    select distinct ct.${S.cardToTag_tagId}
+                    from ${S.cardToTag} ct
+                    where
+                        ct.${S.cardToTag_cardId} in (
+                            select ct1.${S.cardToTag_cardId}
+                            from
+                                ${S.cardToTag} ct1
+                                ${joins->Array.joinWith("\n")}
+                            where ct1.${S.cardToTag_tagId} = ${paramNames->Array.getUnsafe(0)}
+                        )
+                )
+            `
+        let params = Js.Dict.fromArray(
+            paramNames->Array.mapWithIndex((name,i) => (name, selectedTagIds->Array.getUnsafe(i)))
+        )
+        db->dbSelect(query, params)->mapResultsOfSelect(r => {
+            id: r->str("id"),
+            name: r->str("name"),
+        })
+    }
+}
+
+let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
     let cardDeletedCondition = switch filter.deleted {
         | Some(deleted) => `( C.${S.card_deleted} = ${deleted?"1":"0"} )`
         | None => "(1=1)"
@@ -84,12 +132,12 @@ let makeFindCardsQuery = (filter:Dtos.cardFilterDto):(string,Dict.t<JSON.t>) => 
 }
 
 let emptyArr = []
-let findCards = (db:database, req:Dtos.FindCards.req):Dtos.FindCards.res => {
+let findCards = (db:database, req:FindCards.req):FindCards.res => {
     let (query,params) = makeFindCardsQuery(req)
     let rows = db->dbSelect(query,params)
     rows->Array.map(row => fromJsonExn(row, toObj(_, o => {
         {
-            Dtos.id: o->str("card_id"),
+            id: o->str("card_id"),
             isDeleted: o->int("card_deleted") > 0,
             crtTime: o->float("card_crt_time"),
             tagIds: o->strOpt("tag_ids")
@@ -99,7 +147,7 @@ let findCards = (db:database, req:Dtos.FindCards.req):Dtos.FindCards.res => {
             data:
                 if (S.cardType_Translate == o->str("card_type")) {
                     Translate({
-                        Dtos.native: o->strOpt("tr_native")->Option.getOr(""),
+                        native: o->strOpt("tr_native")->Option.getOr(""),
                         foreign: o->strOpt("tr_foreign")->Option.getOr(""),
                         tran: o->strOpt("tr_tran")->Option.getOr(""),
                         nfPaused: o->int("tr_nf_paused") > 0,
@@ -115,13 +163,13 @@ let findCards = (db:database, req:Dtos.FindCards.req):Dtos.FindCards.res => {
 }
 
 let deleteCardQuery = `update ${S.card} set ${S.card_deleted} = 1 where ${S.card_id} = :id`
-let deleteCard = (db:database, req:Dtos.DeleteCard.req):Dtos.DeleteCard.res => {
+let deleteCard = (db:database, req:DeleteCard.req):DeleteCard.res => {
     db->dbUpdate(deleteCardQuery, {"id":req.cardId})
     db->findCards({ cardIds:[req.cardId] })->Array.getUnsafe(0)
 }
 
 let restoreCardQuery = `update ${S.card} set ${S.card_deleted} = 0 where ${S.card_id} = :id`
-let restoreCard = (db:database, req:Dtos.RestoreCard.req):Dtos.RestoreCard.res => {
+let restoreCard = (db:database, req:RestoreCard.req):RestoreCard.res => {
     db->dbUpdate(restoreCardQuery, {"id":req.cardId})
     db->findCards({ cardIds:[req.cardId] })->Array.getUnsafe(0)
 }
@@ -134,7 +182,7 @@ let insertTranslateCardQuery = `insert into ${S.cardTr}
     values (:cardId, :native, :foreign, :tran)`
 let updateTaskPausedQuery = `update ${S.taskSch}
     set ${S.taskSch_paused} = :paused where ${S.taskSch_cardId} = :cardId and ${S.taskSch_taskType} = :taskType`
-let createCard = (db:database, req:Dtos.CreateCard.req):Dtos.CreateCard.res => {
+let createCard = (db:database, req:CreateCard.req):CreateCard.res => {
     dbTransaction(db, () => {
         db->dbUpdate( insertCardQuery, {"card_type":S.cardType_Translate->Int.fromString} )->ignore
         let cardId = db->dbSelectSingleNp("SELECT last_insert_rowid()||'' id")->fromJsonExn(toObj(_, str(_, "id")))
@@ -169,7 +217,7 @@ let deleteCardToTagQuery = `delete from ${S.cardToTag} where ${S.cardToTag_cardI
 let updateTranslateCardQuery = `update ${S.cardTr}
     set ${S.cardTr_native} = :native, ${S.cardTr_foreign} = :foreign, ${S.cardTr_tran} = :tran
     where ${S.cardTr_id} = :cardId`
-let updateCard = (db:database, req:Dtos.UpdateCard.req):Dtos.UpdateCard.res => {
+let updateCard = (db:database, req:UpdateCard.req):UpdateCard.res => {
     dbTransaction(db, () => {
         let newCard = req
         let cardId = newCard.id

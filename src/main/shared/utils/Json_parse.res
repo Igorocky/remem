@@ -375,6 +375,10 @@ let fromJson = (
     catchExn(() => (rootPath, json)->mapper)->validateRes(~validator, ~default, ~defaultFn)
 }
 
+let jsonAnyFromJson = (json:JSON.t): jsonAny => {
+    (rootPath, json)
+}
+
 let fromJsonExn = (
     json:JSON.t, 
     mapper:jsonAny=>'a,
