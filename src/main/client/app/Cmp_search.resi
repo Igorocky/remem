@@ -5,6 +5,6 @@ let make: (
     ~modalRef: Modal.modalRef, 
     ~allTags: array<tagDto>,
     ~createTag: tagDto => promise<result<tagDto, string>>,
-    ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
+    ~getRemainingTags:(bool,array<tagDto>)=>promise<result<array<tagDto>,string>>,
     ~getRemainingTagsSimple:array<tagDto>=>array<tagDto>,
 ) => React.element

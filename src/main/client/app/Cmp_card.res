@@ -102,6 +102,8 @@ let setFnPaused = (st:state,paused:bool):state => {
 let createCard:beFunc<CreateCard.req, CreateCard.res> = createBeFunc(module(CreateCard))
 let updateCard:beFunc<UpdateCard.req, UpdateCard.res> = createBeFunc(module(UpdateCard))
 
+let changeBgColor = "rgb(255,255,235)"
+
 @react.component
 let make = (
     ~modalRef:modalRef,
@@ -146,7 +148,7 @@ let make = (
                 if (initValue == currValue) {
                     None
                 } else {
-                    Some("yellow")
+                    Some(changeBgColor)
                 }
             }
         }
@@ -321,7 +323,7 @@ let make = (
             createTag
             getRemainingTags={selectedTags => Promise.resolve(Ok(getRemainingTagsSimple(selectedTags)))}
             onChange = {tags => setState(setTagIds(_,tags))}
-            bkgColor=?(areTagsChanged()?Some("yellow"):None)
+            bkgColor=?(areTagsChanged()?Some(changeBgColor):None)
         />
         {rndButtons()}
     </Col>

@@ -44,9 +44,13 @@ let updateCard = (st:state, cardId:string, update:cardDto=>cardDto):state => {
 }
 
 let setDeleted = (st:state, deleted:bool):state => {
-    {
-        ...st,
-        filter:{...st.filter, deleted},
+    if (st.filter.deleted->Option.getOr(false) == deleted) {
+        st
+    } else {
+        {
+            ...st,
+            filter:{...st.filter, deleted, tagIds:[]},
+        }
     }
 }
 
@@ -66,7 +70,7 @@ let make = (
     ~modalRef:modalRef,
     ~allTags:array<tagDto>,
     ~createTag: tagDto => promise<result<tagDto, string>>,
-    ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
+    ~getRemainingTags:(bool,array<tagDto>)=>promise<result<array<tagDto>,string>>,
     ~getRemainingTagsSimple:array<tagDto>=>array<tagDto>,
 ) => {
     let (state, setState) = React.useState(makeInitialState)
@@ -127,7 +131,7 @@ let make = (
                 modalRef
                 allTags
                 createTag
-                getRemainingTags
+                getRemainingTags=getRemainingTags(state.filter.deleted->Option.getOr(false), _)
                 onChange = {tags => ()}
                 resetSelectedTags
             />

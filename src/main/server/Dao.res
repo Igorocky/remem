@@ -49,12 +49,12 @@ let getRemainingTags = (db:database, req:GetRemainingTags.req):GetRemainingTags.
         let selectedTagIds = selectedTagIds->Belt_HashSetString.fromArray->Belt_HashSetString.toArray
         let paramNames = Belt_Array.range(1,selectedTagIds->Array.length)->Array.map(i => `tagId${i->Int.toString}`)
         let joins = []
-        for i in 1 to paramNames->Array.length-1 {
-            let idx = Int.toString(i + 1)
+        for i in 2 to paramNames->Array.length {
+            let idx = Int.toString(i)
             joins->Array.push(
                 `inner join ${S.cardToTag} ct${idx} 
                     on ct1.${S.cardToTag_cardId} = ct${idx}.${S.cardToTag_cardId} 
-                        and ct${idx}.${S.cardToTag_tagId} = :${paramNames->Array.getUnsafe(i)}`
+                        and ct${idx}.${S.cardToTag_tagId} = :${paramNames->Array.getUnsafe(i-1)}`
             )
         }
         let query = `
@@ -67,11 +67,14 @@ let getRemainingTags = (db:database, req:GetRemainingTags.req):GetRemainingTags.
                     from ${S.cardToTag} ct
                     where
                         ct.${S.cardToTag_cardId} in (
-                            select ct1.${S.cardToTag_cardId}
+                            select c.${S.card_id}
                             from
-                                ${S.cardToTag} ct1
+                                ${S.card} c
+                                inner join ${S.cardToTag} ct1
+                                    on c.${S.card_id} = ct1.${S.cardToTag_cardId} 
+                                        and ct1.${S.cardToTag_tagId} = :${paramNames->Array.getUnsafe(0)}
                                 ${joins->Array.joinWith("\n")}
-                            where ct1.${S.cardToTag_tagId} = :${paramNames->Array.getUnsafe(0)}
+                            where c.${S.card_deleted} = ${req.deleted?"1":"0"}
                         )
                 )
             `

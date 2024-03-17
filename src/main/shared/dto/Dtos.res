@@ -36,7 +36,8 @@ module DeleteTags = {
 module GetRemainingTags = {
     let name = "getRemainingTags"
     type req = {
-        selectedTagIds: array<string>
+        deleted:bool,
+        selectedTagIds: array<string>,
     }
     type res = array<tagDto>
 }

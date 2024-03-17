@@ -105,9 +105,13 @@ let make = () => {
                             modalRef 
                             allTags 
                             createTag=actCreateTag
-                            getRemainingTags={selectedTags => {
+                            getRemainingTags={(deleted,selectedTags) => {
                                 getRemainingTags(
-                                    { Dtos.GetRemainingTags.selectedTagIds:selectedTags->Array.map(tag => tag.id) }
+                                    { 
+                                        Dtos.GetRemainingTags.selectedTagIds:selectedTags->Array.map(tag => tag.id),
+                                        deleted,
+
+                                    }
                                 )
                             }}
                             getRemainingTagsSimple=getRemainingTagsSimple(allTags,_)
