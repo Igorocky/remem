@@ -205,7 +205,7 @@ let restoreCard = (db:database, req:RestoreCard.req):RestoreCard.res => {
     db->findCards({ cardIds:[req.cardId] })->Array.getUnsafe(0)
 }
 
-let insertCardQuery = `insert into ${S.card}(${S.card_type}) values (:card_type)`
+let insertCardQuery = `insert into ${S.card}(${S.card_type},${S.card_extId}) values (:card_type,:card_extId)`
 let insertCardToTagQuery = `insert into ${S.cardToTag}
     (${S.cardToTag_cardId}, ${S.cardToTag_tagId}) values (:cardId, :tagId)`
 let insertTranslateCardQuery = `insert into ${S.cardTr}
@@ -215,7 +215,8 @@ let updateTaskPausedQuery = `update ${S.task}
     set ${S.task_paused} = :paused where ${S.task_cardId} = :cardId and ${S.task_typeId} = :typeId`
 let createCard = (db:database, req:CreateCard.req):CreateCard.res => {
     dbTransaction(db, () => {
-        db->dbUpdate( insertCardQuery, {"card_type":S.cardType_Translate->Int.fromString} )->ignore
+        db->dbUpdate( insertCardQuery, 
+            {"card_type":S.cardType_Translate->Int.fromString, "card_extId": Uuid.uuidv4()} )->ignore
         let cardId = db->dbSelectSingleNp("SELECT last_insert_rowid()||'' id")->fromJsonExn(toObj(_, str(_, "id")))
         req.tagIds->Belt_HashSetString.fromArray->Belt_HashSetString.forEach(tagId => {
             db->dbUpdate(insertCardToTagQuery, {"cardId":cardId,"tagId":tagId})->ignore

@@ -21,6 +21,7 @@ let tag_crt_time: string
 
 let card: string
 let card_id: string
+let card_extId: string
 let card_type: string
 let card_deleted: string
 let card_crtTime: string

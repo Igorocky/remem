@@ -71,4 +71,22 @@ describe("Dao:tags", () => {
             "after update"
         )
     })
+
+    it("creates new cards", () => {
+        //given
+        let db = Sqlite.makeDatabase(":memory:")
+        Dao.initDatabase(db)
+        db->Dao.fillDbWithRandomData(
+            ~numOfTags=2,
+            ~numOfCardsOfEachType=2,
+            ~minNumOfTagsPerCard=0,
+            ~maxNumOfTagsPerCard=2,
+        )
+
+        //when
+        let allCards = db->findCards({})
+
+        //then
+        assertEq( allCards->Array.length, 2 )
+    })
 })
