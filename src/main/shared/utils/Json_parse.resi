@@ -1,8 +1,6 @@
 type jsonAny
 type jsonObj
 
-let jsonAnyFromJson: JSON.t => jsonAny
-
 let parseJson: (string, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~default: 'a=?, ~defaultFn: unit=>'a=?) 
     => result<'a, string>
 let parseJsonExn: (string, jsonAny => 'a, ~validator: 'a=>result<'a,string>=?, ~default: 'a=?, ~defaultFn: unit=>'a=?) 

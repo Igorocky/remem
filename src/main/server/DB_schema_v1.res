@@ -79,8 +79,8 @@ saveScript(`
     ) strict;
 `)
 saveScript(`
-    create index cardToTag_idx1 on ${cardToTag}(${cardToTag_cardId});
-    create index cardToTag_idx2 on ${cardToTag}(${cardToTag_tagId});
+    create index cardToTag_idx1 on ${cardToTag}(${cardToTag_tagId});
+    create index cardToTag_idx2 on ${cardToTag}(${cardToTag_cardId},${cardToTag_tagId});
 `)
 
 let cardTr = "CARD_TRANSLATE"

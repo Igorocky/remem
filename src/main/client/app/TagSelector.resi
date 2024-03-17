@@ -1,11 +1,14 @@
+open Dtos
+
 @react.component
 let make: (
-  ~modalRef: Modal.modalRef,
-  ~allTags: array<Dtos.tagDto>,
-  ~initTags: array<Dtos.tagDto> = ?,
-  ~initTagIds: array<string> = ?,
-  ~createTag: Dtos.tagDto => promise<result<Dtos.tagDto, string>>,
-  ~getRemainingTags: array<Dtos.tagDto> => promise<result<array<Dtos.tagDto>, string>>,
-  ~onChange: array<Dtos.tagDto> => unit,
-  ~bkgColor:string=?,
+    ~modalRef:Modal.modalRef,
+    ~allTags:array<tagDto>,
+    ~initSelectedTags: array<tagDto> = ?,
+    ~initSelectedTagIds: array<string> = ?,
+    ~createTag:tagDto=>promise<result<tagDto,string>>,
+    ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
+    ~onChange: array<tagDto> => unit,
+    ~bkgColor:string=?,
+    ~resetSelectedTags:React.ref<Js.Nullable.t<array<tagDto>=>unit>>=?,
 ) => React.element

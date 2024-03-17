@@ -11,43 +11,33 @@ type state = {
     filterText:string,
     filteredTags: array<tagDto>,
     remainingTags: array<tagDto>,
-    reqCnt:int,
 }
 
-let makeInitialState = (~allTags:array<tagDto>, ~initTags:array<tagDto>, ~initTagIds:array<string>,) => {
-    let selectedTags = if (initTagIds->Array.length > initTags->Array.length) {
-        allTags->Array.filter(tag => initTagIds->Array.includes(tag.id))
-    } else {
-        initTags
-    }
+let makeInitialState = (
+    ~allTags:array<tagDto>, 
+    ~initSelectedTags:option<array<tagDto>>, 
+    ~initSelectedTagIds:option<array<string>>,
+):state => {
+    let selectedTags = initSelectedTags->Option.getOr(
+        initSelectedTagIds
+            ->Option.map(ids => allTags->Array.filter(tag => ids->Array.includes(tag.id)))
+            ->Option.getOr([])
+    )
+    let selectedTagIds = selectedTags->Array.map(tag => tag.id)->Belt_HashSetString.fromArray
     {
         selectedTags,
         filterText: "",
         filteredTags: allTags,
-        remainingTags: allTags,
-        reqCnt: 0,
+        remainingTags: allTags->Array.filter(tag => !(selectedTagIds->Belt_HashSetString.has(tag.id))),
     }
 }
 
-let selectTag = (st:state, tag:tagDto, remaininTags:array<tagDto>):state => {
+let setSelectedTags = (st:state, selectedTags:array<tagDto>, remainingTags:array<tagDto>):state => {
     {
-        ...st,
-        selectedTags: 
-            Array.concat(st.selectedTags, [tag])
-            ->Array.toSorted(comparatorByStr((tag:tagDto) => tag.name)),
+        selectedTags,
         filterText:"",
-        filteredTags: remaininTags,
-        remainingTags: remaininTags,
-    }
-}
-
-let unselectTag = (st:state, tag:tagDto, remaininTags:array<tagDto>):state => {
-    {
-        ...st,
-        selectedTags: st.selectedTags->Array.filter(t => t.id != tag.id),
-        filterText:"",
-        filteredTags: remaininTags,
-        remainingTags: remaininTags,
+        filteredTags: remainingTags,
+        remainingTags,
     }
 }
 
@@ -60,35 +50,35 @@ let setFilterText = (st:state,text:string):state => {
     }
 }
 
-let setRemainingTags = (st:state, remaininTags:array<tagDto>):state => {
-    {
-        ...st,
-        remainingTags: remaininTags,
-    }->setFilterText(st.filterText)
-}
-
 @react.component
 let make = (
     ~modalRef:modalRef,
     ~allTags:array<tagDto>,
-    ~initTags: array<Dtos.tagDto> = [],
-    ~initTagIds: array<string> = [],
+    ~initSelectedTags: option<array<Dtos.tagDto>> = ?,
+    ~initSelectedTagIds: option<array<string>> = ?,
     ~createTag:tagDto=>promise<result<tagDto,string>>,
     ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
     ~onChange: array<Dtos.tagDto> => unit,
     ~bkgColor:option<string>=?,
+    ~resetSelectedTags:option<React.ref<Js.Nullable.t<array<Dtos.tagDto>=>unit>>>=?,
 ) => {
-    let (state, setState) = React.useState(() => makeInitialState(~allTags, ~initTags, ~initTagIds))
+    let (state, setState) = React.useState(() => makeInitialState(
+        ~allTags, ~initSelectedTags, ~initSelectedTagIds
+    ))
 
     let getExn = getExn(_, modalRef)
 
-    let actUpdateRemainingTags = async () => {
-        let remainingTags = await getRemainingTags(state.selectedTags)->getExn
-        setState(setRemainingTags(_,remainingTags))
+    let updateSelectedTags = async (update:array<tagDto>=>array<tagDto>) => {
+        let newSelectedTags = state.selectedTags->update
+        let remainingTags = await getRemainingTags(newSelectedTags)->getExn
+        setState(setSelectedTags(_,newSelectedTags,remainingTags))
     }
 
     React.useEffect1(() => {
-        actUpdateRemainingTags()->ignore
+        let allTagIds = allTags->Array.map(tag => tag.id)->Belt_HashSetString.fromArray
+        updateSelectedTags(selectedTags => 
+            selectedTags->Array.filter(tag => allTagIds->Belt_HashSetString.has(tag.id))
+        )->ignore
         None
     }, [allTags])
 
@@ -98,15 +88,11 @@ let make = (
     }, [state.selectedTags])
 
     let actSelectTag = async tag => {
-        let selectedTags = state.selectedTags->Array.concat([tag])
-        let remainingTags = await getRemainingTags(selectedTags)->getExn
-        setState(selectTag(_,tag,remainingTags))
+        updateSelectedTags(Array.concat(_, [tag]))
     }
 
     let actUnselectTag = async (tag:tagDto) => {
-        let selectedTags = state.selectedTags->Array.filter(t => t.id != tag.id)
-        let remainingTags = await getRemainingTags(selectedTags)->getExn
-        setState(unselectTag(_, tag, remainingTags))
+        updateSelectedTags(Array.filter(_, t => t.id != tag.id))
     }
 
     let actCreateNewTagOrSelectSingleFilteredTag = async () => {

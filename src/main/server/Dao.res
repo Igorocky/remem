@@ -5,17 +5,17 @@ open Dtos
 module S = DB_schema_v1
 
 let mapResultsOfSelect = (rows:array<JSON.t>, mapper:Json_parse.jsonObj=>'a):array<'a> => {
-    rows->Array.map(jsonAnyFromJson)->Array.map(toObj(_, mapper))
+    rows->Array.map(fromJsonExn(_, toObj(_, mapper)))
 }
 
 let getAllTagsQuery = `select ${S.tag_id}||'' id, ${S.tag_name} name from ${S.tag} order by ${S.tag_name}`
 let getAllTags = (db:database):GetAllTags.res => {
     {
         GetAllTags.tags:
-            db->dbSelectNp(getAllTagsQuery)->Array.map(fromJsonExn(_,toObj(_, o => {
-                id: o->str("id"),
-                name: o->str("name"),
-            })))
+            db->dbSelectNp(getAllTagsQuery)->mapResultsOfSelect(r => {
+                id: r->str("id"),
+                name: r->str("name"),
+            })
     }
 }
 
@@ -134,32 +134,31 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
 let emptyArr = []
 let findCards = (db:database, req:FindCards.req):FindCards.res => {
     let (query,params) = makeFindCardsQuery(req)
-    let rows = db->dbSelect(query,params)
-    rows->Array.map(row => fromJsonExn(row, toObj(_, o => {
+    db->dbSelect(query,params)->mapResultsOfSelect(r => {
         {
-            id: o->str("card_id"),
-            isDeleted: o->int("card_deleted") > 0,
-            crtTime: o->float("card_crt_time"),
-            tagIds: o->strOpt("tag_ids")
+            id: r->str("card_id"),
+            isDeleted: r->int("card_deleted") > 0,
+            crtTime: r->float("card_crt_time"),
+            tagIds: r->strOpt("tag_ids")
                 ->Option.map(String.split(_, ","))
                 ->Option.map(strArr => strArr->Array.map(str => str->String.substring(~start=1,~end=str->String.length-1)))
                 ->Option.getOr(emptyArr),
             data:
-                if (S.cardType_Translate == o->str("card_type")) {
+                if (S.cardType_Translate == r->str("card_type")) {
                     Translate({
-                        native: o->strOpt("tr_native")->Option.getOr(""),
-                        foreign: o->strOpt("tr_foreign")->Option.getOr(""),
-                        tran: o->strOpt("tr_tran")->Option.getOr(""),
-                        nfPaused: o->int("tr_nf_paused") > 0,
-                        nfNextAccAt: o->float("tr_nf_next_acc_at"),
-                        fnPaused: o->int("tr_fn_paused") > 0,
-                        fnNextAccAt: o->float("tr_fn_next_acc_at"),
+                        native: r->strOpt("tr_native")->Option.getOr(""),
+                        foreign: r->strOpt("tr_foreign")->Option.getOr(""),
+                        tran: r->strOpt("tr_tran")->Option.getOr(""),
+                        nfPaused: r->int("tr_nf_paused") > 0,
+                        nfNextAccAt: r->float("tr_nf_next_acc_at"),
+                        fnPaused: r->int("tr_fn_paused") > 0,
+                        fnNextAccAt: r->float("tr_fn_next_acc_at"),
                     })
                 } else {
-                    Js.Exn.raiseError(`Unexpected card type: ${o->str("card_type")}`)
+                    Js.Exn.raiseError(`Unexpected card type: ${r->str("card_type")}`)
                 },
         }
-    })))
+    })
 }
 
 let deleteCardQuery = `update ${S.card} set ${S.card_deleted} = 1 where ${S.card_id} = :id`

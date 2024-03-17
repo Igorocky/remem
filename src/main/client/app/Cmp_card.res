@@ -317,7 +317,7 @@ let make = (
         <TagSelector
             modalRef
             allTags
-            initTagIds=state.cardDto.tagIds
+            initSelectedTagIds=state.cardDto.tagIds
             createTag
             getRemainingTags
             onChange = {tags => setState(setTagIds(_,tags))}

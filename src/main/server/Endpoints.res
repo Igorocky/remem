@@ -62,15 +62,21 @@ let execBeMethod = (
 
 let makeEndpoints = (db:Sqlite.database):endpoints => {
     let endpointsMap:Belt.HashMap.String.t<JSON.t=>promise<beResponse>> = Belt.HashMap.String.make(~hintSize=100)
-    registerBeFunc(endpointsMap, module(Dtos.GetAllTags), () => Dao.getAllTags(db) )
-    registerBeFunc(endpointsMap, module(Dtos.CreateTag), Dao.createTag(db, _) )
-    registerBeFunc(endpointsMap, module(Dtos.UpdateTag), Dao.updateTag(db, _) )
-    registerBeFunc(endpointsMap, module(Dtos.DeleteTags), Dao.deleteTags(db, _) )
-    registerBeFunc(endpointsMap, module(Dtos.FindCards), Dao.findCards(db, _) )
-    registerBeFunc(endpointsMap, module(Dtos.DeleteCard), Dao.deleteCard(db, _) )
-    registerBeFunc(endpointsMap, module(Dtos.RestoreCard), Dao.restoreCard(db, _) )
-    registerBeFunc(endpointsMap, module(Dtos.CreateCard), Dao.createCard(db, _) )
-    registerBeFunc(endpointsMap, module(Dtos.UpdateCard), Dao.updateCard(db, _) )
+    let registerDaoFunc = ( 
+        type req, type res, m:Dto_utils.beFuncModule<req,res>, daoFunc:(Sqlite.database,req)=>res 
+    ): unit => {
+        registerBeFunc(endpointsMap, m, daoFunc(db, _))
+    }
+    registerDaoFunc(module(Dtos.GetAllTags), (db,_) => Dao.getAllTags(db))
+    registerDaoFunc(module(Dtos.CreateTag), Dao.createTag)
+    registerDaoFunc(module(Dtos.UpdateTag), Dao.updateTag)
+    registerDaoFunc(module(Dtos.DeleteTags), Dao.deleteTags)
+    registerDaoFunc(module(Dtos.GetRemainingTags), Dao.getRemainingTags)
+    registerDaoFunc(module(Dtos.FindCards), Dao.findCards)
+    registerDaoFunc(module(Dtos.DeleteCard), Dao.deleteCard)
+    registerDaoFunc(module(Dtos.RestoreCard), Dao.restoreCard)
+    registerDaoFunc(module(Dtos.CreateCard), Dao.createCard)
+    registerDaoFunc(module(Dtos.UpdateCard), Dao.updateCard)
     {
         execBeFunc: execBeMethod(endpointsMap, ...)
     }
