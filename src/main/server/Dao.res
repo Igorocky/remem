@@ -44,12 +44,13 @@ let deleteTags = (db:database, req:DeleteTags.req):DeleteTags.res => {
 let makeJoinsForTagFilter = (
     ~cardTableAlias:string, 
     ~cardToTagAlias:string,
+    ~tagParamName:string,
     ~tagIds:array<string>
 ):(string,Dict.t<string>) => {
     if (tagIds->Array.length == 0) {
-        ("", Dict.fromArray([]))
+        ("", Dict.make())
     } else {
-        let paramNames = Belt_Array.range(0,tagIds->Array.length-1)->Array.map(i => `tagId${i->Int.toString}`)
+        let paramNames = Belt_Array.range(0,tagIds->Array.length-1)->Array.map(i => `${tagParamName}${i->Int.toString}`)
         let joins = []
         joins->Array.push(
             `inner join ${S.cardToTag} ${cardToTagAlias}0
@@ -80,6 +81,7 @@ let getRemainingTags = (db:database, req:GetRemainingTags.req):GetRemainingTags.
         let (joins, params) = makeJoinsForTagFilter(
             ~cardTableAlias="c", 
             ~cardToTagAlias="ct",
+            ~tagParamName="tagId",
             ~tagIds=selectedTagIds
         )
         let query = `
@@ -124,6 +126,13 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
         })
         where->Array.push(`( C.${S.card_id} in (` ++ listOfParams->Array.joinWith(", ") ++ ") )")
     })
+    let (tagJoins,tagParams) = filter.tagIds->Option.map(tagIds => makeJoinsForTagFilter(
+        ~cardTableAlias="C", 
+        ~cardToTagAlias="tagFilt",
+        ~tagParamName="tagId",
+        ~tagIds,
+    ))->Option.getOr(("", Dict.make()))
+    tagParams->Dict.toArray->Array.forEach(((k,v)) => params->Dict.set(k,v->JSON.Encode.string))
     let query = `
     select * from (
         select
@@ -145,6 +154,7 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
             left join ${S.cardToTag} T on C.${S.card_id} = T.${S.cardToTag_cardId}
             left join ${S.cardTr} CT on C.${S.card_id} = CT.${S.cardTr_id}
             left join ${S.taskSch} S on C.${S.card_id} = S.${S.taskSch_cardId}
+            ${tagJoins}
         where ${where->Array.joinWith(" and ")}
         group by C.${S.card_id}, C.${S.card_deleted}, C.${S.card_crtTime}
         order by C.${S.card_crtTime}

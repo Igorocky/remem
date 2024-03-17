@@ -132,7 +132,7 @@ let make = (
                 allTags
                 createTag
                 getRemainingTags=getRemainingTags(state.filter.deleted->Option.getOr(false), _)
-                onChange = {tags => ()}
+                onChange = {tags => setState(setSelectedTags(_,tags))}
                 resetSelectedTags
             />
             <FormControlLabel
