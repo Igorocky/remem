@@ -47,21 +47,21 @@ let getRemainingTags = (db:database, req:GetRemainingTags.req):GetRemainingTags.
         getAllTags(db).tags
     } else {
         let selectedTagIds = selectedTagIds->Belt_HashSetString.fromArray->Belt_HashSetString.toArray
-        let paramNames = Belt_Array.range(1,selectedTagIds->Array.length)->Array.map(i => `:tagId${i->Int.toString}`)
+        let paramNames = Belt_Array.range(1,selectedTagIds->Array.length)->Array.map(i => `tagId${i->Int.toString}`)
         let joins = []
         for i in 1 to paramNames->Array.length-1 {
             let idx = Int.toString(i + 1)
             joins->Array.push(
                 `inner join ${S.cardToTag} ct${idx} 
                     on ct1.${S.cardToTag_cardId} = ct${idx}.${S.cardToTag_cardId} 
-                        and ct2.${S.cardToTag_tagId} = ${paramNames->Array.getUnsafe(i)}`
+                        and ct${idx}.${S.cardToTag_tagId} = :${paramNames->Array.getUnsafe(i)}`
             )
         }
         let query = `
             select t.${S.tag_id}||'' id, t.${S.tag_name} name
             from ${S.tag} t
             where
-                t.${S.tag_id} not in (${paramNames->Array.joinWith(",")})
+                t.${S.tag_id} not in (${paramNames->Array.map(name => ":" ++ name)->Array.joinWith(",")})
                 and t.${S.tag_id} in (
                     select distinct ct.${S.cardToTag_tagId}
                     from ${S.cardToTag} ct
@@ -71,7 +71,7 @@ let getRemainingTags = (db:database, req:GetRemainingTags.req):GetRemainingTags.
                             from
                                 ${S.cardToTag} ct1
                                 ${joins->Array.joinWith("\n")}
-                            where ct1.${S.cardToTag_tagId} = ${paramNames->Array.getUnsafe(0)}
+                            where ct1.${S.cardToTag_tagId} = :${paramNames->Array.getUnsafe(0)}
                         )
                 )
             `

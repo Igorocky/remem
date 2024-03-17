@@ -60,7 +60,7 @@ let make = (
     ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
     ~onChange: array<Dtos.tagDto> => unit,
     ~bkgColor:option<string>=?,
-    ~resetSelectedTags:option<React.ref<Js.Nullable.t<array<Dtos.tagDto>=>unit>>>=?,
+    ~resetSelectedTags:option<React.ref<Js.Nullable.t<array<tagDto>=>unit>>>=?,
 ) => {
     let (state, setState) = React.useState(() => makeInitialState(
         ~allTags, ~initSelectedTags, ~initSelectedTagIds
@@ -68,10 +68,20 @@ let make = (
 
     let getExn = getExn(_, modalRef)
 
+    let getOrderedSetOfTagIds = (tags:array<tagDto>):array<string> => {
+        let res = tags->Array.map(tag => tag.id)
+            ->Belt_HashSetString.fromArray
+            ->Belt_HashSetString.toArray
+        res->Array.sort(String.compare)
+        res
+    }
+
     let updateSelectedTags = async (update:array<tagDto>=>array<tagDto>) => {
         let newSelectedTags = state.selectedTags->update
-        let remainingTags = await getRemainingTags(newSelectedTags)->getExn
-        setState(setSelectedTags(_,newSelectedTags,remainingTags))
+        if (getOrderedSetOfTagIds(state.selectedTags) != getOrderedSetOfTagIds(newSelectedTags)) {
+            let remainingTags = await getRemainingTags(newSelectedTags)->getExn
+            setState(setSelectedTags(_,newSelectedTags,remainingTags))
+        }
     }
 
     React.useEffect1(() => {
@@ -86,6 +96,12 @@ let make = (
         onChange(state.selectedTags)
         None
     }, [state.selectedTags])
+
+    resetSelectedTags->Option.forEach(resetSelectedTags => {
+        resetSelectedTags.current = Js.Nullable.return(newSelectedTags => {
+            updateSelectedTags(_ => newSelectedTags)->ignore
+        })
+    })
 
     let actSelectTag = async tag => {
         updateSelectedTags(Array.concat(_, [tag]))

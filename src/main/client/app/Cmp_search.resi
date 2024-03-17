@@ -1,7 +1,10 @@
+open Dtos
+
 @react.component
 let make: (
     ~modalRef: Modal.modalRef, 
-    ~allTags: array<Dtos.tagDto>,
-    ~createTag: Dtos.tagDto => promise<result<Dtos.tagDto, string>>,
-    ~getRemainingTags:array<Dtos.tagDto>=>promise<result<array<Dtos.tagDto>,string>>,
+    ~allTags: array<tagDto>,
+    ~createTag: tagDto => promise<result<tagDto, string>>,
+    ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
+    ~getRemainingTagsSimple:array<tagDto>=>array<tagDto>,
 ) => React.element

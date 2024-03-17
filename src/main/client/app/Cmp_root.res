@@ -2,6 +2,7 @@ open Mui_components
 open BE_utils
 open React_rnd_utils
 open Modal
+open Dtos
 
 let mainTheme = ThemeProvider.createTheme(
     {
@@ -23,7 +24,7 @@ type tabData =
     | MakeCard
 
 type state = {
-    allTags:option<array<Dtos.tagDto>>
+    allTags:option<array<tagDto>>
 }
 
 let makeState = ():state => {
@@ -32,16 +33,15 @@ let makeState = ():state => {
     }
 }
 
-let getAllTags:beFunc<Dtos.GetAllTags.req, Dtos.GetAllTags.res> = createBeFunc(module(Dtos.GetAllTags))
-let createTag = createBeFunc(module(Dtos.CreateTag))
-let updateTag = createBeFunc(module(Dtos.UpdateTag))
-let deleteTags = createBeFunc(module(Dtos.DeleteTags))
+let getAllTags:beFunc<GetAllTags.req, GetAllTags.res> = createBeFunc(module(GetAllTags))
+let createTag = createBeFunc(module(CreateTag))
+let updateTag = createBeFunc(module(UpdateTag))
+let deleteTags = createBeFunc(module(DeleteTags))
+let getRemainingTags = createBeFunc(module(GetRemainingTags))
 
-let getRemainingTagsSimple = (allTags:array<Dtos.tagDto>, selectedTags:array<Dtos.tagDto>) => {
+let getRemainingTagsSimple = (allTags:array<tagDto>, selectedTags:array<tagDto>):array<tagDto> => {
     let selectedIds = selectedTags->Array.map(tag => tag.id)->Belt.HashSet.String.fromArray
-    Promise.resolve(
-        allTags->Array.filter(tag => !(selectedIds->Belt.HashSet.String.has(tag.id)))->Ok
-    )
+    allTags->Array.filter(tag => !(selectedIds->Belt.HashSet.String.has(tag.id)))
 }
 
 @react.component
@@ -68,8 +68,8 @@ let make = () => {
         None
     })
 
-    let actCreateTag = async (tag:Dtos.tagDto):result<Dtos.tagDto,string> => {
-        let res:Dtos.CreateTag.res = await createTag({name:tag.name})->getExn
+    let actCreateTag = async (tag:tagDto):result<tagDto,string> => {
+        let res:CreateTag.res = await createTag({name:tag.name})->getExn
         setState(_ => {allTags:Some(res.tags)})
         switch res.tags->Array.find(t => t.name == tag.name) {
             | None => Error("Internal error: cannot identify the newly created tag.")
@@ -77,17 +77,17 @@ let make = () => {
         }
     }
 
-    let actUpdateTag = async (tag:Dtos.tagDto):unit => {
-        let res:Dtos.UpdateTag.res = await updateTag(tag)->getExn
+    let actUpdateTag = async (tag:tagDto):unit => {
+        let res:UpdateTag.res = await updateTag(tag)->getExn
         setState(_ => {allTags:Some(res.tags)})
     }
 
-    let actDeleteTag = async (tag:Dtos.tagDto):unit => {
-        let res:Dtos.DeleteTags.res = await deleteTags({ids:[tag.id]})->getExn
+    let actDeleteTag = async (tag:tagDto):unit => {
+        let res:DeleteTags.res = await deleteTags({ids:[tag.id]})->getExn
         setState(_ => {allTags:Some(res.tags)})
     }
 
-    let rndTabContent = (tab:UseTabs.tab<'a>, allTags:array<Dtos.tagDto>) => {
+    let rndTabContent = (tab:UseTabs.tab<'a>, allTags:array<tagDto>) => {
         <div key=tab.id style=ReactDOM.Style.make(~display=if (tab.id == activeTabId) {"block"} else {"none"}, ())>
             {
                 switch tab.data {
@@ -105,7 +105,12 @@ let make = () => {
                             modalRef 
                             allTags 
                             createTag=actCreateTag
-                            getRemainingTags=getRemainingTagsSimple(allTags,_)
+                            getRemainingTags={selectedTags => {
+                                getRemainingTags(
+                                    { Dtos.GetRemainingTags.selectedTagIds:selectedTags->Array.map(tag => tag.id) }
+                                )
+                            }}
+                            getRemainingTagsSimple=getRemainingTagsSimple(allTags,_)
                         />
                     }
                     | MakeCard => {
@@ -113,7 +118,7 @@ let make = () => {
                             modalRef 
                             allTags 
                             createTag=actCreateTag
-                            getRemainingTags=getRemainingTagsSimple(allTags,_)
+                            getRemainingTagsSimple=getRemainingTagsSimple(allTags,_)
                         />
                     }
                 }

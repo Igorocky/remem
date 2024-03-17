@@ -87,7 +87,7 @@ let setTran = (st:state,text:string):state => {
     updateTranslateCardData(st, data => {...data, tran:text})
 }
 
-let setTagIds = (st:state,tags:array<Dtos.tagDto>):state => {
+let setTagIds = (st:state,tags:array<tagDto>):state => {
     {cardDto:{...st.cardDto, tagIds:tags->Array.map(tag => tag.id)}}
 }
 
@@ -99,15 +99,15 @@ let setFnPaused = (st:state,paused:bool):state => {
     updateTranslateCardData(st, data => {...data, fnPaused:paused})
 }
 
-let createCard:beFunc<Dtos.CreateCard.req, Dtos.CreateCard.res> = createBeFunc(module(Dtos.CreateCard))
-let updateCard:beFunc<Dtos.UpdateCard.req, Dtos.UpdateCard.res> = createBeFunc(module(Dtos.UpdateCard))
+let createCard:beFunc<CreateCard.req, CreateCard.res> = createBeFunc(module(CreateCard))
+let updateCard:beFunc<UpdateCard.req, UpdateCard.res> = createBeFunc(module(UpdateCard))
 
 @react.component
 let make = (
     ~modalRef:modalRef,
-    ~allTags:array<Dtos.tagDto>,
-    ~createTag: Dtos.tagDto => promise<result<Dtos.tagDto, string>>,
-    ~getRemainingTags:array<Dtos.tagDto>=>promise<result<array<Dtos.tagDto>,string>>,
+    ~allTags:array<tagDto>,
+    ~createTag: tagDto => promise<result<tagDto, string>>,
+    ~getRemainingTagsSimple:array<tagDto>=>array<tagDto>,
     ~cardDto:option<cardDto>=?,
     ~onSaved:option<cardDto=>unit>=?,
     ~onCancel:option<unit=>unit>=?,
@@ -319,7 +319,7 @@ let make = (
             allTags
             initSelectedTagIds=state.cardDto.tagIds
             createTag
-            getRemainingTags
+            getRemainingTags={selectedTags => Promise.resolve(Ok(getRemainingTagsSimple(selectedTags)))}
             onChange = {tags => setState(setTagIds(_,tags))}
             bkgColor=?(areTagsChanged()?Some("yellow"):None)
         />

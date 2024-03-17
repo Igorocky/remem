@@ -94,6 +94,7 @@ type cardFilterDto = {
     pageIdx?:int,
     deleted?:bool,
     cardIds?:array<string>,
+    tagIds?:array<string>,
     // cardType:option<cardType>,
 }
 

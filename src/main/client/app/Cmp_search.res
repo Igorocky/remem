@@ -16,6 +16,7 @@ let makeInitialState = ():state => {
             itemsPerPage:50,
             pageIdx:0,
             deleted:false,
+            tagIds: [],
         },
         cards:None,
     }
@@ -25,6 +26,13 @@ let setPageIdx = (st:state, pageIdx:int, cards:array<cardDto>):state => {
     {
         filter:{...st.filter, pageIdx},
         cards:Some(cards),
+    }
+}
+
+let setSelectedTags = (st:state, selectedTags:array<tagDto>):state => {
+    {
+        ...st,
+        filter:{...st.filter, tagIds:selectedTags->Array.map(tag => tag.id)},
     }
 }
 
@@ -49,20 +57,34 @@ let resetFilter = (st:state):state => {
     }
 }
 
-let findCards:beFunc<Dtos.FindCards.req, Dtos.FindCards.res> = createBeFunc(module(Dtos.FindCards))
-let deleteCard:beFunc<Dtos.DeleteCard.req, Dtos.DeleteCard.res> = createBeFunc(module(Dtos.DeleteCard))
-let restoreCard:beFunc<Dtos.RestoreCard.req, Dtos.RestoreCard.res> = createBeFunc(module(Dtos.RestoreCard))
+let findCards:beFunc<FindCards.req, FindCards.res> = createBeFunc(module(FindCards))
+let deleteCard:beFunc<DeleteCard.req, DeleteCard.res> = createBeFunc(module(DeleteCard))
+let restoreCard:beFunc<RestoreCard.req, RestoreCard.res> = createBeFunc(module(RestoreCard))
 
 @react.component
 let make = (
     ~modalRef:modalRef,
-    ~allTags:array<Dtos.tagDto>,
-    ~createTag: Dtos.tagDto => promise<result<Dtos.tagDto, string>>,
-    ~getRemainingTags:array<Dtos.tagDto>=>promise<result<array<Dtos.tagDto>,string>>,
+    ~allTags:array<tagDto>,
+    ~createTag: tagDto => promise<result<tagDto, string>>,
+    ~getRemainingTags:array<tagDto>=>promise<result<array<tagDto>,string>>,
+    ~getRemainingTagsSimple:array<tagDto>=>array<tagDto>,
 ) => {
     let (state, setState) = React.useState(makeInitialState)
+    let resetSelectedTags = React.useRef(Js.Nullable.null)
 
     let getExn = getExn(_, modalRef)
+
+    React.useEffect1(() => {
+        resetSelectedTags.current->Js.Nullable.toOption->Option.forEach(resetSelectedTags => {
+            switch state.filter.tagIds {
+                | None => resetSelectedTags([])
+                | Some(tagIds) => {
+                    resetSelectedTags(allTags->Array.filter(tag => tagIds->Array.includes(tag.id)))
+                }
+            }
+        })
+        None
+    }, [state.filter.tagIds])
 
     let actSearch = async (pageIdx:int):unit => {
         let foundCards = await findCards({...state.filter, pageIdx})->getExn
@@ -87,7 +109,7 @@ let make = (
                     modalRef 
                     allTags 
                     createTag
-                    getRemainingTags
+                    getRemainingTagsSimple
                     cardDto=cardDto
                     onSaved={updatedCard => {
                         setState(updateCard(_,cardDto.id,_=>updatedCard))
@@ -101,6 +123,14 @@ let make = (
 
     let rndFilter = () => {
         <Col>
+            <TagSelector
+                modalRef
+                allTags
+                createTag
+                getRemainingTags
+                onChange = {tags => ()}
+                resetSelectedTags
+            />
             <FormControlLabel
                 control={
                     <Checkbox
