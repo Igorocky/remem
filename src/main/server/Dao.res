@@ -41,27 +41,52 @@ let deleteTags = (db:database, req:DeleteTags.req):DeleteTags.res => {
     getAllTags(db)
 }
 
+let makeJoinsForTagFilter = (
+    ~cardTableAlias:string, 
+    ~cardToTagAlias:string,
+    ~tagIds:array<string>
+):(string,Dict.t<string>) => {
+    if (tagIds->Array.length == 0) {
+        ("", Dict.fromArray([]))
+    } else {
+        let paramNames = Belt_Array.range(0,tagIds->Array.length-1)->Array.map(i => `tagId${i->Int.toString}`)
+        let joins = []
+        joins->Array.push(
+            `inner join ${S.cardToTag} ${cardToTagAlias}0
+                on ${cardTableAlias}.${S.card_id} = ${cardToTagAlias}0.${S.cardToTag_cardId} 
+                    and ${cardToTagAlias}0.${S.cardToTag_tagId} = :${paramNames->Array.getUnsafe(0)}`
+        )
+        for i in 1 to paramNames->Array.length-1 {
+            let idx = Int.toString(i)
+            joins->Array.push(
+                `inner join ${S.cardToTag} ${cardToTagAlias}${idx} 
+                    on ${cardToTagAlias}0.${S.cardToTag_cardId} = ${cardToTagAlias}${idx}.${S.cardToTag_cardId} 
+                        and ${cardToTagAlias}${idx}.${S.cardToTag_tagId} = :${paramNames->Array.getUnsafe(i)}`
+            )
+        }
+        let params = Js.Dict.fromArray(
+            paramNames->Array.mapWithIndex((name,i) => (name, tagIds->Array.getUnsafe(i)))
+        )
+        ( joins->Array.joinWith("\n"), params )
+    }
+}
+
 let getRemainingTags = (db:database, req:GetRemainingTags.req):GetRemainingTags.res => {
     let selectedTagIds = req.selectedTagIds
     if (selectedTagIds->Array.length == 0) {
         getAllTags(db).tags
     } else {
         let selectedTagIds = selectedTagIds->Belt_HashSetString.fromArray->Belt_HashSetString.toArray
-        let paramNames = Belt_Array.range(1,selectedTagIds->Array.length)->Array.map(i => `tagId${i->Int.toString}`)
-        let joins = []
-        for i in 2 to paramNames->Array.length {
-            let idx = Int.toString(i)
-            joins->Array.push(
-                `inner join ${S.cardToTag} ct${idx} 
-                    on ct1.${S.cardToTag_cardId} = ct${idx}.${S.cardToTag_cardId} 
-                        and ct${idx}.${S.cardToTag_tagId} = :${paramNames->Array.getUnsafe(i-1)}`
-            )
-        }
+        let (joins, params) = makeJoinsForTagFilter(
+            ~cardTableAlias="c", 
+            ~cardToTagAlias="ct",
+            ~tagIds=selectedTagIds
+        )
         let query = `
             select t.${S.tag_id}||'' id, t.${S.tag_name} name
             from ${S.tag} t
             where
-                t.${S.tag_id} not in (${paramNames->Array.map(name => ":" ++ name)->Array.joinWith(",")})
+                t.${S.tag_id} not in (${params->Dict.keysToArray->Array.map(name => ":" ++ name)->Array.joinWith(",")})
                 and t.${S.tag_id} in (
                     select distinct ct.${S.cardToTag_tagId}
                     from ${S.cardToTag} ct
@@ -70,17 +95,11 @@ let getRemainingTags = (db:database, req:GetRemainingTags.req):GetRemainingTags.
                             select c.${S.card_id}
                             from
                                 ${S.card} c
-                                inner join ${S.cardToTag} ct1
-                                    on c.${S.card_id} = ct1.${S.cardToTag_cardId} 
-                                        and ct1.${S.cardToTag_tagId} = :${paramNames->Array.getUnsafe(0)}
-                                ${joins->Array.joinWith("\n")}
+                                ${joins}
                             where c.${S.card_deleted} = ${req.deleted?"1":"0"}
                         )
                 )
             `
-        let params = Js.Dict.fromArray(
-            paramNames->Array.mapWithIndex((name,i) => (name, selectedTagIds->Array.getUnsafe(i)))
-        )
         db->dbSelect(query, params)->mapResultsOfSelect(r => {
             id: r->str("id"),
             name: r->str("name"),
