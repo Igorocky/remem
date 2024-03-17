@@ -47,9 +47,7 @@ type translateCardDto = {
     foreign:string,
     tran:string,
     nfPaused:bool,
-    nfNextAccAt:float,
     fnPaused:bool,
-    fnNextAccAt:float,
 }
 
 type cardType =

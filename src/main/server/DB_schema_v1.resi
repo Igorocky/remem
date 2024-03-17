@@ -35,14 +35,14 @@ let cardTr_native: string
 let cardTr_foreign: string
 let cardTr_tran: string
 
-let taskSch: string
-let taskSch_id: string
-let taskSch_cardId: string
-let taskSch_taskType: string
-let taskSch_paused: string
-let taskSch_updAt: string
-let taskSch_delay: string
-let taskSch_rnd: string
-let taskSch_nextAccInMs: string
-let taskSch_nextAccAt: string
+let task: string
+let task_id: string
+let task_cardId: string
+let task_typeId: string
+let task_paused: string
 
+let taskHist: string
+let taskHist_taskId: string
+let taskHist_time: string
+let taskHist_mark: string
+let taskHist_note: string

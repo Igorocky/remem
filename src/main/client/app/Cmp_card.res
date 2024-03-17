@@ -35,9 +35,7 @@ let makeInitialCardDto = (cardType:cardType, ~tagIds:option<array<string>>=?) =>
                         foreign:"",
                         tran:"",
                         nfPaused:false,
-                        nfNextAccAt:0.,
                         fnPaused:false,
-                        fnNextAccAt:0.,
                     })
                 }
             }
@@ -154,11 +152,18 @@ let make = (
         }
     }
 
+    let getOrderedSet = (arr:array<string>):array<string> => {
+        let res = arr->Belt_HashSetString.fromArray
+            ->Belt_HashSetString.toArray
+        res->Array.sort(String.compare)
+        res
+    }
+
     let areTagsChanged = () => {
         switch cardDto {
             | None => false
             | Some(cardDto) => {
-                cardDto.tagIds->Belt_HashSetString.fromArray != state.cardDto.tagIds->Belt_HashSetString.fromArray
+                cardDto.tagIds->getOrderedSet != state.cardDto.tagIds->getOrderedSet
             }
         }
     }

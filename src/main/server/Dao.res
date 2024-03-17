@@ -148,15 +148,13 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
             max(TR.${S.cardTr_native}) tr_native, 
             max(TR.${S.cardTr_foreign}) tr_foreign, 
             max(TR.${S.cardTr_tran}) tr_tran,
-            max(case when S.${S.taskSch_taskType} = ${S.taskType_TranslateNf} then S.${S.taskSch_paused} else 0 end)    tr_nf_paused,
-            max(case when S.${S.taskSch_taskType} = ${S.taskType_TranslateNf} then S.${S.taskSch_nextAccAt} else 0 end) tr_nf_next_acc_at,
-            max(case when S.${S.taskSch_taskType} = ${S.taskType_TranslateFn} then S.${S.taskSch_paused} else 0 end)    tr_fn_paused,
-            max(case when S.${S.taskSch_taskType} = ${S.taskType_TranslateFn} then S.${S.taskSch_nextAccAt} else 0 end)    tr_fn_next_acc_at
+            max(case when S.${S.task_typeId} = ${S.taskType_TranslateNf} then S.${S.task_paused} else 0 end) tr_nf_paused,
+            max(case when S.${S.task_typeId} = ${S.taskType_TranslateFn} then S.${S.task_paused} else 0 end) tr_fn_paused
         from
             ${S.card} C
             left join ${S.cardToTag} CT on C.${S.card_id} = CT.${S.cardToTag_cardId}
             left join ${S.cardTr} TR on C.${S.card_id} = TR.${S.cardTr_id}
-            left join ${S.taskSch} S on C.${S.card_id} = S.${S.taskSch_cardId}
+            left join ${S.task} S on C.${S.card_id} = S.${S.task_cardId}
             ${tagJoins}
         where ${where->Array.joinWith(" and ")}
         group by C.${S.card_id}, C.${S.card_deleted}, C.${S.card_crtTime}
@@ -186,9 +184,7 @@ let findCards = (db:database, req:FindCards.req):FindCards.res => {
                         foreign: r->strOpt("tr_foreign")->Option.getOr(""),
                         tran: r->strOpt("tr_tran")->Option.getOr(""),
                         nfPaused: r->int("tr_nf_paused") > 0,
-                        nfNextAccAt: r->float("tr_nf_next_acc_at"),
                         fnPaused: r->int("tr_fn_paused") > 0,
-                        fnNextAccAt: r->float("tr_fn_next_acc_at"),
                     })
                 } else {
                     Js.Exn.raiseError(`Unexpected card type: ${r->str("card_type")}`)
@@ -215,8 +211,8 @@ let insertCardToTagQuery = `insert into ${S.cardToTag}
 let insertTranslateCardQuery = `insert into ${S.cardTr}
     (${S.cardTr_id}, ${S.cardTr_native}, ${S.cardTr_foreign}, ${S.cardTr_tran}) 
     values (:cardId, :native, :foreign, :tran)`
-let updateTaskPausedQuery = `update ${S.taskSch}
-    set ${S.taskSch_paused} = :paused where ${S.taskSch_cardId} = :cardId and ${S.taskSch_taskType} = :taskType`
+let updateTaskPausedQuery = `update ${S.task}
+    set ${S.task_paused} = :paused where ${S.task_cardId} = :cardId and ${S.task_typeId} = :typeId`
 let createCard = (db:database, req:CreateCard.req):CreateCard.res => {
     dbTransaction(db, () => {
         db->dbUpdate( insertCardQuery, {"card_type":S.cardType_Translate->Int.fromString} )->ignore
@@ -232,11 +228,11 @@ let createCard = (db:database, req:CreateCard.req):CreateCard.res => {
                 )->ignore
                 if (cardData.nfPaused) {
                     db->dbUpdate(updateTaskPausedQuery, 
-                        {"cardId":cardId,"taskType":S.taskType_TranslateNf, "paused":1})->ignore
+                        {"cardId":cardId,"typeId":S.taskType_TranslateNf, "paused":1})->ignore
                 }
                 if (cardData.fnPaused) {
                     db->dbUpdate(updateTaskPausedQuery, 
-                        {"cardId":cardId,"taskType":S.taskType_TranslateFn, "paused":1})->ignore
+                        {"cardId":cardId,"typeId":S.taskType_TranslateFn, "paused":1})->ignore
                 }
             }
         }
@@ -256,23 +252,23 @@ let updateCard = (db:database, req:UpdateCard.req):UpdateCard.res => {
     dbTransaction(db, () => {
         let newCard = req
         let cardId = newCard.id
-        let currCard = db->findCards({ cardIds:[cardId] })->Array.getUnsafe(0)
-        if (!(tagsAreEqual(currCard, newCard))) {
+        let oldCard = db->findCards({ cardIds:[cardId] })->Array.getUnsafe(0)
+        if (!(tagsAreEqual(oldCard, newCard))) {
             db->dbUpdate(deleteCardToTagQuery, {"cardId":cardId})->ignore
             newCard.tagIds->Belt_HashSetString.fromArray->Belt_HashSetString.forEach(tagId => {
                 db->dbUpdate(insertCardToTagQuery, {"cardId":cardId,"tagId":tagId})->ignore
             })
         }
         switch newCard.data {
-            | Translate(cardData) => {
+            | Translate(newCardData) => {
                 db->dbUpdate(
                     updateTranslateCardQuery, 
-                    {"cardId":cardId,"native":cardData.native,"foreign":cardData.foreign,"tran":cardData.tran}
+                    {"cardId":cardId,"native":newCardData.native,"foreign":newCardData.foreign,"tran":newCardData.tran}
                 )->ignore
                 db->dbUpdate(updateTaskPausedQuery,
-                    {"cardId":cardId,"taskType":S.taskType_TranslateNf, "paused":cardData.nfPaused?1:0})->ignore
+                    {"cardId":cardId,"typeId":S.taskType_TranslateNf, "paused":newCardData.nfPaused?1:0})->ignore
                 db->dbUpdate(updateTaskPausedQuery,
-                    {"cardId":cardId,"taskType":S.taskType_TranslateFn, "paused":cardData.fnPaused?1:0})->ignore
+                    {"cardId":cardId,"typeId":S.taskType_TranslateFn, "paused":newCardData.fnPaused?1:0})->ignore
             }
         }
         db->findCards({ cardIds:[cardId] })->Array.getUnsafe(0)
@@ -317,9 +313,7 @@ let fillDbWithRandomData = (
                     foreign:Random.randText(~minLen=5, ~maxLen=10, ~digitProb=0, ~spaceProb=0),
                     tran:"[" ++ Random.randText(~minLen=5, ~maxLen=10, ~digitProb=0, ~spaceProb=0) ++ "]",
                     nfPaused:Js.Math.random() < 0.5,
-                    nfNextAccAt:Date.now(),
                     fnPaused:Js.Math.random() < 0.5,
-                    fnNextAccAt:Date.now(),
                 }),
             }
         })

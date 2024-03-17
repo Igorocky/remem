@@ -98,53 +98,48 @@ saveScript(`
     ) strict;
 `)
 
-let taskSch = "TASK_SCHEDULE"
-let taskSch_id = "ID"
-let taskSch_cardId = "CARD"
-let taskSch_taskType = "TASK_TYPE"
-let taskSch_paused = "PAUSED"
-let taskSch_updAt = "UPD_AT"
-let taskSch_delay = "DELAY"
-let taskSch_rnd = "RAND"
-let taskSch_nextAccInMs = "NEXT_ACCESS_IN_MS"
-let taskSch_nextAccAt = "NEXT_ACCESS_AT"
+let task = "TASK"
+let task_id = "ID"
+let task_cardId = "CARD_ID"
+let task_typeId = "TYPE_ID"
+let task_paused = "PAUSED"
 
 saveScript(`
-    create table ${taskSch} (
-        ${taskSch_id} integer primary key,
-        ${taskSch_cardId} integer references ${card}(${card_id}) ON DELETE CASCADE ON UPDATE CASCADE,
-        ${taskSch_taskType} integer references ${taskType}(${taskType_id}) ON DELETE RESTRICT ON UPDATE CASCADE,
-        ${taskSch_paused} integer check (${taskSch_paused} in (0,1)) default 0,
-        ${taskSch_updAt} real not null,
-        ${taskSch_delay} text not null,
-        ${taskSch_rnd} real not null,
-        ${taskSch_nextAccInMs} real not null,
-        ${taskSch_nextAccAt} real not null,
-        unique (${taskSch_cardId}, ${taskSch_taskType})
-    );
+    create table ${task} (
+        ${task_id} integer primary key,
+        ${task_cardId} integer references ${card}(${card_id}) ON DELETE CASCADE ON UPDATE CASCADE,
+        ${task_typeId} integer references ${taskType}(${taskType_id}) ON DELETE RESTRICT ON UPDATE CASCADE,
+        ${task_paused} integer check (${task_paused} in (0,1)) default 0,
+        unique (${task_cardId}, ${task_typeId})
+    ) strict;
 `)
 saveScript(`
     create trigger create_tasks after insert on ${card} for each row begin
-        insert into ${taskSch} (
-            ${taskSch_cardId}, 
-            ${taskSch_taskType},
-            ${taskSch_updAt},
-            ${taskSch_delay},
-            ${taskSch_rnd},
-            ${taskSch_nextAccInMs},
-            ${taskSch_nextAccAt}
+        insert into ${task} (
+            ${task_cardId}, 
+            ${task_typeId}
         )
         select
-            /* ${taskSch_cardId},  */ new.${card_id},
-            /* ${taskSch_taskType}, */ tt.${taskType_id},
-            /* ${taskSch_updAt}, */ unixepoch()*1000,
-            /* ${taskSch_delay}, */ '1s',
-            /* ${taskSch_rnd}, */ 0,
-            /* ${taskSch_nextAccInMs}, */ 1000,
-            /* ${taskSch_nextAccAt} */ unixepoch()*1000 + 1000
+            /* ${task_cardId},  */ new.${card_id},
+            /* ${task_typeId}, */ tt.${taskType_id}
         from ${taskType} tt
         where tt.${taskType_cardType} = new.${card_type};
     end;
+`)
+
+let taskHist = "TASK_HIST"
+let taskHist_taskId = "TASK_ID"
+let taskHist_time = "TIME"
+let taskHist_mark = "MARK"
+let taskHist_note = "NOTE"
+
+saveScript(`
+    create table ${taskHist} (
+        ${taskHist_taskId} integer references ${task}(${task_id}) ON DELETE CASCADE ON UPDATE CASCADE,
+        ${taskHist_time} real not null,
+        ${taskHist_mark} real not null check (0 <= ${taskHist_mark} and ${taskHist_mark} <= 1),
+        ${taskHist_note} text not null default ''
+    ) strict;
 `)
 
 let schemaScript = schemaScripts->Array.joinWith("\n\n")
