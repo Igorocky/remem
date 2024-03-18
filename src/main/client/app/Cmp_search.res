@@ -32,8 +32,8 @@ let setPageIdx = (st:state, pageIdx:int, cards:array<cardDto>):state => {
 
 let setSelectedTags = (st:state, selectedTags:array<tagDto>):state => {
     {
-        ...st,
         filter:{...st.filter, tagIds:selectedTags->Array.map(tag => tag.id)},
+        cards:None,
     }
 }
 
@@ -49,16 +49,16 @@ let setDeleted = (st:state, deleted:bool):state => {
         st
     } else {
         {
-            ...st,
             filter:{...st.filter, deleted, tagIds:[]},
+            cards:None,
         }
     }
 }
 
 let setWithoutTags = (st:state, withoutTags:bool):state => {
     {
-        ...st,
         filter:{...st.filter, withoutTags},
+        cards:None,
     }
 }
 

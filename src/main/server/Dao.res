@@ -8,6 +8,15 @@ let mapResultsOfSelect = (rows:array<JSON.t>, mapper:Json_parse.jsonObj=>'a):arr
     rows->Array.map(fromJsonExn(_, toObj(_, mapper)))
 }
 
+let addParams = (a:Dict.t<'a>, b:Dict.t<'a>):unit => {
+    b->Dict.forEachWithKey((v,k) => {
+        switch a->Dict.get(k) {
+            | Some(_) => Js.Exn.raiseError(`addParams: parameter name conflict for the key '${k}'`)
+            | None => a->Dict.set(k,v)
+        }
+    })
+}
+
 let getAllTagsQuery = `select ${S.tag_id}||'' id, ${S.tag_name} name from ${S.tag} order by ${S.tag_name}`
 let getAllTags = (db:database):GetAllTags.res => {
     {
@@ -46,7 +55,7 @@ let makeJoinsForTagFilter = (
     ~cardToTagAlias:string,
     ~tagParamName:string,
     ~tagIds:array<string>
-):(string,Dict.t<string>) => {
+):(string,Dict.t<JSON.t>) => {
     if (tagIds->Array.length == 0) {
         ("", Dict.make())
     } else {
@@ -66,7 +75,7 @@ let makeJoinsForTagFilter = (
             )
         }
         let params = Js.Dict.fromArray(
-            paramNames->Array.mapWithIndex((name,i) => (name, tagIds->Array.getUnsafe(i)))
+            paramNames->Array.mapWithIndex((name,i) => (name, tagIds->Array.getUnsafe(i)->JSON.Encode.string))
         )
         ( joins->Array.joinWith("\n"), params )
     }
@@ -116,6 +125,7 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
     }
     let where = [cardDeletedCondition]
     let params = Dict.make()
+    params->Dict.set("itemsPerPage", filter.itemsPerPage->Option.getOr(1)->JSON.Encode.int)
     filter.cardIds->Option.forEach(ids => {
         let listOfParams = []
         ids->Array.forEachWithIndex((id,idx) => {
@@ -132,19 +142,18 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
         ~tagParamName="tagId",
         ~tagIds,
     ))->Option.getOr(("", Dict.make()))
-    tagParams->Dict.toArray->Array.forEach(((k,v)) => params->Dict.set(k,v->JSON.Encode.string))
+    params->addParams(tagParams)
     if (filter.withoutTags->Option.getOr(false)) {
         where->Array.push(`( CT.${S.cardToTag_tagId} is null )`)
     }
     let query = `
-    select * from (
         select
-            (row_number() over () - 1) / ${filter.itemsPerPage->Option.getOr(50)->Int.toString} page_idx,
+            (row_number() over () - 1) / cast(:itemsPerPage as int) page_idx,
             C.${S.card_id}||'' card_id, 
             C.${S.card_deleted} card_deleted, 
             C.${S.card_crtTime} card_crt_time, 
             C.${S.card_type}||'' card_type,
-            group_concat(distinct ':'||CT.${S.cardToTag_tagId}||':') tag_ids,
+            group_concat(distinct CT.${S.cardToTag_tagId}) tag_ids,
             max(TR.${S.cardTr_native}) tr_native, 
             max(TR.${S.cardTr_foreign}) tr_foreign, 
             max(TR.${S.cardTr_tran}) tr_tran,
@@ -158,10 +167,20 @@ let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
             ${tagJoins}
         where ${where->Array.joinWith(" and ")}
         group by C.${S.card_id}, C.${S.card_deleted}, C.${S.card_crtTime}
-        order by C.${S.card_crtTime}
-    ) where page_idx = ${filter.pageIdx->Option.getOr(0)->Int.toString}
-    order by card_crt_time
+        order by C.${S.card_crtTime} desc
     `
+    let query = switch filter.pageIdx {
+        | None => query
+        | Some(pageIdx) => {
+            params->Dict.set("pageIdx", pageIdx->JSON.Encode.int)
+            `
+            select * from (
+                ${query}
+            ) where page_idx = cast(:pageIdx as int)
+            order by card_crt_time desc
+            `
+        }
+    }
     (query,params)
 }
 
@@ -175,7 +194,6 @@ let findCards = (db:database, req:FindCards.req):FindCards.res => {
             crtTime: r->float("card_crt_time"),
             tagIds: r->strOpt("tag_ids")
                 ->Option.map(String.split(_, ","))
-                ->Option.map(strArr => strArr->Array.map(str => str->String.substring(~start=1,~end=str->String.length-1)))
                 ->Option.getOr(emptyArr),
             data:
                 if (S.cardType_Translate == r->str("card_type")) {

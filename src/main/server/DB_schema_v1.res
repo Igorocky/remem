@@ -145,6 +145,9 @@ saveScript(`
         ${cardTr_tran} text not null default ''
     ) strict;
 `)
+saveScript(`
+    create index ${cardTr}_idx1 on ${cardTr}(${cardTr_cardId});
+`)
 
 let cardTrChg = "CARD_TRANSLATE_CHG"
 let cardTrChg_time = "TIME"
