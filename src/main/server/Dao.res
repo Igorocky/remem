@@ -118,6 +118,14 @@ let getRemainingTags = (db:database, req:GetRemainingTags.req):GetRemainingTags.
     }
 }
 
+let insertTaskMarkQuery = `insert into ${S.taskHist}(${S.taskHist_taskId},${S.taskHist_mark},${S.taskHist_note})
+    values(:taskId, :mark, :note)`
+let saveTaskMark = (db:database, req:SaveTaskMark.req):SaveTaskMark.res => {
+    db->dbUpdate(insertTaskMarkQuery,
+        {"taskId":req.taskId, "mark":req.mark, "note":req.note}
+    )
+}
+
 let makeFindCardsQuery = (filter:cardFilterDto):(string,Dict.t<JSON.t>) => {
     let cardDeletedCondition = switch filter.deleted {
         | Some(deleted) => `( C.${S.card_deleted} = ${deleted?"1":"0"} )`
@@ -300,6 +308,8 @@ let fillDbWithRandomData = (
     ~numOfCardsOfEachType:int,
     ~minNumOfTagsPerCard:int,
     ~maxNumOfTagsPerCard:int,
+    ~histLengthPerTask:int,
+    ~markProbs:array<(float,int)>,
 ):unit => {
     let tags = []
     for _ in 1 to numOfTags {
@@ -340,6 +350,16 @@ let fillDbWithRandomData = (
             db->deleteCard({cardId:card.id})->ignore
         }
     }
+    db->dbSelectNp(`select ${S.task_id}||'' ${S.task_id} from ${S.task}`)->mapResultsOfSelect(str(_, S.task_id))
+        ->Array.forEach(taskId => {
+            for _ in 1 to histLengthPerTask {
+                db->saveTaskMark({
+                    taskId,
+                    mark: Random.randSelect(markProbs),
+                    note: "",
+                })
+            }
+        })
 }
 
 let initDatabase = (db:database) => {

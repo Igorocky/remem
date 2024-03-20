@@ -88,6 +88,16 @@ module RestoreCard = {
     type res = cardDto
 }
 
+module SaveTaskMark = {
+    let name = "saveTaskMark"
+    type req = {
+        taskId:string,
+        mark:float,
+        note:string,
+    }
+    type res = unit
+}
+
 type cardFilterDto = {
     itemsPerPage?:int,
     pageIdx?:int,

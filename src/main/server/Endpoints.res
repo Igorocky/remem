@@ -72,6 +72,7 @@ let makeEndpoints = (db:Sqlite.database):endpoints => {
     registerDaoFunc(module(Dtos.UpdateTag), Dao.updateTag)
     registerDaoFunc(module(Dtos.DeleteTags), Dao.deleteTags)
     registerDaoFunc(module(Dtos.GetRemainingTags), Dao.getRemainingTags)
+    registerDaoFunc(module(Dtos.SaveTaskMark), Dao.saveTaskMark)
     registerDaoFunc(module(Dtos.FindCards), Dao.findCards)
     registerDaoFunc(module(Dtos.DeleteCard), Dao.deleteCard)
     registerDaoFunc(module(Dtos.RestoreCard), Dao.restoreCard)

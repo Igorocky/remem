@@ -81,6 +81,8 @@ describe("Dao:tags", () => {
             ~numOfCardsOfEachType=2,
             ~minNumOfTagsPerCard=0,
             ~maxNumOfTagsPerCard=2,
+            ~histLengthPerTask=1,
+            ~markProbs=[(0.,1),(1.,1)],
         )
 
         //when

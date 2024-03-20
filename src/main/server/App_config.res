@@ -12,6 +12,8 @@ let makeBackend = ():backend => {
             ~numOfCardsOfEachType=1_000,
             ~minNumOfTagsPerCard=0,
             ~maxNumOfTagsPerCard=5,
+            ~histLengthPerTask=20,
+            ~markProbs=[(0.,1),(1.,1)],
         )
     }
     let endpoints = Endpoints.makeEndpoints(db)

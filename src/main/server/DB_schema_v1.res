@@ -115,6 +115,7 @@ saveScript(`
 `)
 
 let taskHist = "TASK_HIST"
+let taskHist_id = "ID"
 let taskHist_taskId = "TASK_ID"
 let taskHist_time = "TIME"
 let taskHist_mark = "MARK"
@@ -122,8 +123,9 @@ let taskHist_note = "NOTE"
 
 saveScript(`
     create table ${taskHist} (
+        ${taskHist_id} integer primary key,
         ${taskHist_taskId} integer references ${task}(${task_id}) ON DELETE CASCADE ON UPDATE CASCADE,
-        ${taskHist_time} real not null,
+        ${taskHist_time} real not null default ( unixepoch() * 1000 ),
         ${taskHist_mark} real not null check (0 <= ${taskHist_mark} and ${taskHist_mark} <= 1),
         ${taskHist_note} text not null default ''
     ) strict;

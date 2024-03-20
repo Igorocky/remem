@@ -9,6 +9,8 @@ let updateTag: (database, UpdateTag.req) => UpdateTag.res
 let deleteTags: (database, DeleteTags.req) => DeleteTags.res
 let getRemainingTags: (database, GetRemainingTags.req) => GetRemainingTags.res
 
+let saveTaskMark: (database, SaveTaskMark.req) => SaveTaskMark.res
+
 let findCards: (database, FindCards.req) => FindCards.res
 let deleteCard: (database, DeleteCard.req) => DeleteCard.res
 let restoreCard: (database, RestoreCard.req) => RestoreCard.res
@@ -21,4 +23,6 @@ let fillDbWithRandomData: (
     ~numOfCardsOfEachType:int,
     ~minNumOfTagsPerCard:int,
     ~maxNumOfTagsPerCard:int,
+    ~histLengthPerTask:int,
+    ~markProbs:array<(float,int)>,
 ) => unit
