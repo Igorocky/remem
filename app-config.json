@@ -1,0 +1,5 @@
+{
+    "database": {
+        "filePath": "databases/remem.sqlite"
+    }
+}

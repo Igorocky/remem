@@ -1,9 +1,14 @@
-import express from "express";
+import express from 'express'
 import {makeBackend} from './App_config.res.mjs'
+import fs from 'fs'
+
+const config = JSON.parse(fs.readFileSync('app-config.json', 'utf8'));
+console.log("config = " + JSON.stringify(config));
+
 const app = express()
 const port = 3000
 
-const backend = makeBackend()
+const backend = makeBackend({dbFilePath:config.database.filePath})
 
 app.use(express.json({limit:'10MB'}))
 app.use(express.static("ui"))
